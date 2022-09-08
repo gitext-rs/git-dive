@@ -1,8 +1,42 @@
 [package]
 name = "git-dive"
-version = "0.1.0"
+description = "Dive into a file's history to find root cause"
+version = "0.0.1"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/gitext-rs/git-dive"
+documentation = "https://github.com/gitext-rs/git-dive"
+readme = "README.md"
+categories = ["command-line-interface", "development-tools"]
+keywords = ["git", "cli"]
 edition = "2021"
+rust-version = "1.60.0"  # MSRV
+include = [
+  "src/**/*",
+  "Cargo.toml",
+  "LICENSE*",
+  "README.md",
+  "examples/**/*"
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package.metadata.release]
+pre-release-replacements = [
+  {file="CHANGELOG.md", search="Unreleased", replace="{{version}}", min=1},
+  {file="CHANGELOG.md", search="\\.\\.\\.HEAD", replace="...{{tag_name}}", exactly=1},
+  {file="CHANGELOG.md", search="ReleaseDate", replace="{{date}}", min=1},
+  {file="CHANGELOG.md", search="<!-- next-header -->", replace="<!-- next-header -->\n## [Unreleased] - ReleaseDate\n", exactly=1},
+  {file="CHANGELOG.md", search="<!-- next-url -->", replace="<!-- next-url -->\n[Unreleased]: https://github.com/gitext-rs/git-dive/compare/{{tag_name}}...HEAD", exactly=1},
+]
 
 [dependencies]
+git2 = { version = "0.14", default-features = false, features = ["vendored-libgit2"] }
+git-config-env = "0.1"
+clap = { version = "3.1", features = ["derive"] }
+clap-verbosity-flag = "1.0"
+log = "0.4"
+env_logger = { version = "0.9", default-features = false, features = ["termcolor"] }
+yansi = "0.5.0"
+concolor = "0.0.8"
+concolor-clap = { version = "0.0.9", features = ["api_unstable"] }
+proc-exit = "1"
+eyre = "0.6"
+human-panic = "1"
