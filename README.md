@@ -15,6 +15,7 @@ Dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE)
 - [Install](#install)
 - [Getting Started](#getting-started)
 - [FAQ](#faq)
+- [Comparison](docs/comparison.md)
 - [Contribute](CONTRIBUTING.md)
 - [CHANGELOG](CHANGELOG.md)
 
