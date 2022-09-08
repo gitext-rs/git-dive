@@ -24,7 +24,7 @@ See
 
 A CLI for showing a file with line numbers and annotations for when a change was introduced
 - Supports ignoring specific revisions via [blame.ignoreRevsFile](https://git-scm.com/docs/git-config#Documentation/git-config.txt-blameignoreRevsFile)
-- To investigate the commit, requires showing out and doing `git show <sha>`
+- To investigate the commit, requires dropping out and doing `git show <sha>`
 - If the commit isn't of interest, requires running `git blame <sha>~ <path>` which will fail if the file had moved
 
 ## git "pickaxe"
