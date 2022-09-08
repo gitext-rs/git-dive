@@ -50,6 +50,20 @@ Let's you click to get info about a commit but doesn't seem to have any other in
 
 See [Git Tower: Blame Window](https://www.git-tower.com/help/guides/commit-history/blame/windows)
 
+## CLion
+
+An IDE that includes a GUI for `git blame`
+
+- Colors commits differently
+- Syntax highlighting
+- Click on commit to see `git show` and to jump to the commit
+- Can jump to a previous revision
+- Can hide revisions
+  - A GUI hint that this happens
+  - Can be turned on/off
+
+See [CLion: "Locate Code Author"](https://www.jetbrains.com/help/clion/investigate-changes.html#annotate_blame)
+
 ## Tig
 
 A git TUI that includes a `git blame` view
