@@ -41,3 +41,4 @@ proc-exit = "1"
 human-panic = "1"
 pager = "0.16.0"
 anyhow = "1.0.64"
+syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy", "default-syntaxes", "default-themes"] }
