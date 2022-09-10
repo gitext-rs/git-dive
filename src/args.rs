@@ -6,6 +6,9 @@
         color = concolor_clap::color_choice(),
     )]
 pub struct Args {
+    #[clap(action)]
+    pub file: std::path::PathBuf,
+
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///
     /// When multiple -C options are given, each subsequent

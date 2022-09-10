@@ -6,6 +6,7 @@ use clap::Parser;
 use proc_exit::WithCodeResultExt;
 
 mod args;
+mod blame;
 mod logger;
 
 fn main() {
@@ -29,7 +30,7 @@ fn run() -> proc_exit::ExitResult {
     };
 
     args.color.apply();
-    let _colored_stdout = concolor::get(concolor::Stream::Stdout).ansi_color();
+    let colored_stdout = concolor::get(concolor::Stream::Stdout).ansi_color();
     let colored_stderr = concolor::get(concolor::Stream::Stderr).ansi_color();
 
     logger::init_logging(args.verbose.clone(), colored_stderr);
@@ -43,6 +44,8 @@ fn run() -> proc_exit::ExitResult {
         log::trace!("CWD={}", current_dir.display());
         std::env::set_current_dir(current_dir).with_code(proc_exit::Code::USAGE_ERR)?;
     }
+
+    blame::blame(&args, colored_stdout, colored_stderr)?;
 
     Ok(())
 }
