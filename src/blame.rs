@@ -6,6 +6,7 @@ pub fn blame(
     colored_stdout: bool,
     _colored_stderr: bool,
 ) -> proc_exit::ExitResult {
+    #[cfg(unix)]
     pager::Pager::new().setup();
 
     let mut file = std::fs::read_to_string(&args.file)

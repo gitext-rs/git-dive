@@ -39,6 +39,8 @@ concolor = "0.0.8"
 concolor-clap = { version = "0.0.10", features = ["api_unstable"] }
 proc-exit = "1"
 human-panic = "1"
-pager = "0.16.0"
 anyhow = "1.0.64"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy", "default-syntaxes", "default-themes"] }
+
+[target.'cfg(unix)'.dependencies]
+pager = "0.16.0"
