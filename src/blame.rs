@@ -13,14 +13,24 @@ pub fn blame(
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
         .unwrap_or(80) as usize;
 
-    #[cfg(unix)]
-    pager::Pager::new().setup();
-
     let repo = git2::Repository::discover(".").with_code(proc_exit::Code::CONFIG_ERR)?;
     let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get_string(THEME_FIELD).ok();
 
-    let mut file = std::fs::read_to_string(&args.file)
+    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    let theme = theme.as_deref().unwrap_or(THEME_DEFAULT);
+    let theme = theme_set
+        .themes
+        .get(theme)
+        .or_else(|| theme_set.themes.get(THEME_DEFAULT))
+        .expect("default theme is present");
+
+    let syntax = syntax_set
+        .find_syntax_for_file(&args.file)?
+        .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
+
+    let file = std::fs::read_to_string(&args.file)
         .with_context(|| format!("Failed to read {}", args.file.display()))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
 
@@ -30,12 +40,14 @@ pub fn blame(
 
     let code_width = total_width - line_count_width - sep.len();
 
-    if let Some(ext) = colored_stdout
-        .then(|| args.file.extension().and_then(|s| s.to_str()))
-        .flatten()
-    {
-        file = highlight(&file, ext, theme.as_deref()).with_code(proc_exit::Code::UNKNOWN)?;
-    }
+    let mut highlighter = if colored_stdout {
+        Highlighter::enabled(syntax, theme)
+    } else {
+        Highlighter::disabled()
+    };
+
+    #[cfg(unix)]
+    pager::Pager::new().setup();
 
     let mut stdout = std::io::stdout().lock();
     let reset = anstyle::Reset.render();
@@ -45,11 +57,14 @@ pub fn blame(
 
     for (line_num, file_line) in file.lines().enumerate() {
         let line_num = line_num + 1;
-        for (i, visual_line) in textwrap::wrap(file_line, &wrap).into_iter().enumerate() {
+        let file_line = highlighter
+            .highlight_line(file_line, &syntax_set)
+            .with_code(proc_exit::Code::UNKNOWN)?;
+        for (i, visual_line) in textwrap::wrap(&file_line, &wrap).into_iter().enumerate() {
             if i == 0 {
-                let _ = writeln!(
+                let _ = write!(
                     &mut stdout,
-                    "{reset}{line_num:>line_count_width$}{sep}{visual_line}"
+                    "{line_num:>line_count_width$}{sep}{visual_line}\n{reset}"
                 );
             }
         }
@@ -58,39 +73,37 @@ pub fn blame(
     Ok(())
 }
 
-fn highlight(file: &str, ext: &str, theme: Option<&str>) -> anyhow::Result<String> {
-    use syntect::easy::HighlightLines;
-    use syntect::highlighting::{Style, ThemeSet};
-    use syntect::parsing::SyntaxSet;
-    use syntect::util::{as_24_bit_terminal_escaped, LinesWithEndings};
+pub struct Highlighter<'a> {
+    highlighter: Option<syntect::easy::HighlightLines<'a>>,
+}
 
-    let mut output = String::new();
-
-    // Load these once at the start of your program
-    let ps = SyntaxSet::load_defaults_newlines();
-    let ts = ThemeSet::load_defaults();
-
-    let theme = theme.unwrap_or(THEME_DEFAULT);
-    let theme = ts
-        .themes
-        .get(theme)
-        .or_else(|| ts.themes.get(THEME_DEFAULT))
-        .expect("default theme is present");
-
-    let syntax = match ps.find_syntax_by_extension(ext) {
-        Some(syntax) => syntax,
-        None => {
-            return Ok(file.to_owned());
-        }
-    };
-    let mut h = HighlightLines::new(syntax, theme);
-    for line in LinesWithEndings::from(file) {
-        let ranges: Vec<(Style, &str)> = h.highlight_line(line, &ps)?;
-        let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
-        output.push_str(&escaped);
+impl<'a> Highlighter<'a> {
+    fn enabled(
+        syntax: &'a syntect::parsing::SyntaxReference,
+        theme: &'a syntect::highlighting::Theme,
+    ) -> Self {
+        let highlighter = Some(syntect::easy::HighlightLines::new(syntax, theme));
+        Self { highlighter }
     }
 
-    Ok(output)
+    fn disabled() -> Self {
+        let highlighter = None;
+        Self { highlighter }
+    }
+
+    fn highlight_line(
+        &mut self,
+        line: &str,
+        syntax_set: &syntect::parsing::SyntaxSet,
+    ) -> anyhow::Result<String> {
+        if let Some(highlighter) = &mut self.highlighter {
+            let ranges = highlighter.highlight_line(line, syntax_set)?;
+            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+            Ok(escaped)
+        } else {
+            Ok(line.to_owned())
+        }
+    }
 }
 
 const THEME_FIELD: &str = "dive.theme";
