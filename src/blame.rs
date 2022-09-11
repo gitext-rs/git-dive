@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use anyhow::Context as _;
 use proc_exit::WithCodeResultExt;
 
@@ -6,6 +8,11 @@ pub fn blame(
     colored_stdout: bool,
     _colored_stderr: bool,
 ) -> proc_exit::ExitResult {
+    let total_width = terminal_size::terminal_size()
+        .map(|(w, _h)| w.0)
+        .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
+        .unwrap_or(80) as usize;
+
     #[cfg(unix)]
     pager::Pager::new().setup();
 
@@ -17,6 +24,12 @@ pub fn blame(
         .with_context(|| format!("Failed to read {}", args.file.display()))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
 
+    let line_count = file.lines().count();
+    let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
+    let sep = " │ ";
+
+    let code_width = total_width - line_count_width - sep.len();
+
     if let Some(ext) = colored_stdout
         .then(|| args.file.extension().and_then(|s| s.to_str()))
         .flatten()
@@ -24,7 +37,23 @@ pub fn blame(
         file = highlight(&file, ext, theme.as_deref()).with_code(proc_exit::Code::UNKNOWN)?;
     }
 
-    println!("{}", file);
+    let mut stdout = std::io::stdout().lock();
+    let reset = anstyle::Reset.render();
+    let wrap = textwrap::Options::new(code_width)
+        .break_words(false)
+        .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
+
+    for (line_num, file_line) in file.lines().enumerate() {
+        let line_num = line_num + 1;
+        for (i, visual_line) in textwrap::wrap(file_line, &wrap).into_iter().enumerate() {
+            if i == 0 {
+                let _ = writeln!(
+                    &mut stdout,
+                    "{reset}{line_num:>line_count_width$}{sep}{visual_line}"
+                );
+            }
+        }
+    }
 
     Ok(())
 }
