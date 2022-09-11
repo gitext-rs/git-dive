@@ -18,6 +18,23 @@ pub fn blame(
     let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get_string(THEME_FIELD).ok();
 
+    let rev = repo
+        .revparse_single(&args.rev)
+        .with_code(proc_exit::Code::CONFIG_ERR)?;
+    let mut settings = git2::BlameOptions::new();
+    settings
+        .track_copies_same_file(true)
+        .track_copies_same_commit_moves(true)
+        .track_copies_same_commit_copies(true)
+        .track_copies_any_commit_copies(true)
+        .first_parent(true)
+        .ignore_whitespace(true)
+        .newest_commit(rev.id());
+    let blame = repo
+        .blame_file(&args.file, Some(&mut settings))
+        .with_code(proc_exit::Code::CONFIG_ERR)?;
+    let annotations = Annotations::new(&repo, &blame);
+
     let rel_path = to_repo_relative(&args.file, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
 
@@ -38,9 +55,20 @@ pub fn blame(
 
     let line_count = file.lines().count();
     let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
-    let sep = " │ ";
+    let sep = "│";
+    let space_count = 3;
+    let origin_width = annotations
+        .notes
+        .values()
+        .map(|a| {
+            // HACK: when we support more than IDs, we'll need to respect UTF-8
+            a.origin().len()
+        })
+        .max()
+        .unwrap_or(0);
+    let gutter_width = origin_width + line_count_width + sep.len() + space_count;
 
-    let code_width = total_width - line_count_width - sep.len();
+    let code_width = total_width.saturating_sub(gutter_width);
 
     let mut highlighter = if colored_stdout {
         Highlighter::enabled(syntax, theme)
@@ -77,6 +105,7 @@ pub fn blame(
         .break_words(false)
         .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
 
+    let mut prev_hunk_id = git2::Oid::zero();
     for (line_num, file_line) in file.lines().enumerate() {
         let line_num = line_num + 1;
 
@@ -90,6 +119,25 @@ pub fn blame(
             .highlight_line(file_line, &syntax_set)
             .with_code(proc_exit::Code::UNKNOWN)?;
         for (i, visual_line) in textwrap::wrap(&file_line, &wrap).into_iter().enumerate() {
+            let origin = if i == 0 {
+                let hunk = blame.get_line(line_num).unwrap_or_else(|| {
+                    panic!("Mismatch in line numbers between dive ({line_num}) and git2")
+                });
+                let hunk_id = hunk.orig_commit_id();
+                if hunk_id != prev_hunk_id {
+                    prev_hunk_id = hunk_id;
+                    let ann = annotations
+                        .notes
+                        .get(&hunk_id)
+                        .expect("all blame hunks are annotated");
+                    ann.origin()
+                } else {
+                    "⋮"
+                }
+            } else {
+                "⋮"
+            };
+
             let line_num = if i == 0 {
                 line_num.to_string()
             } else {
@@ -97,7 +145,7 @@ pub fn blame(
             };
             let _ = write!(
                 &mut stdout,
-                "{gutter_style}{line_num:>line_count_width$}{sep}{reset}{visual_line}\n{reset}"
+                "{gutter_style}{origin:origin_width$} {line_num:>line_count_width$} {sep} {reset}{visual_line}\n{reset}"
             );
         }
     }
@@ -178,6 +226,41 @@ fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String>
     };
 
     Ok(buffer)
+}
+
+pub struct Annotations {
+    notes: std::collections::HashMap<git2::Oid, Annotation>,
+}
+
+impl Annotations {
+    pub fn new(repo: &git2::Repository, blame: &git2::Blame<'_>) -> Self {
+        let mut notes = std::collections::HashMap::new();
+        for hunk in blame.iter() {
+            let id = hunk.orig_commit_id();
+            notes.entry(id).or_insert_with(|| {
+                let obj = repo.find_object(id, None).expect("blame has valid ids");
+                let short = obj
+                    .short_id()
+                    .unwrap_or_else(|e| panic!("unknown failure for short_id for {}: {}", id, e))
+                    .as_str()
+                    .expect("short_id is always valid UTF-8")
+                    .to_owned();
+                Annotation { short }
+            });
+        }
+
+        Annotations { notes }
+    }
+}
+
+pub struct Annotation {
+    short: String,
+}
+
+impl Annotation {
+    pub fn origin(&self) -> &str {
+        self.short.as_str()
+    }
 }
 
 pub struct Highlighter<'a> {
