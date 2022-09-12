@@ -280,7 +280,7 @@ impl Annotations {
             let relative = if i == 0 {
                 head.to_owned()
             } else {
-                format!("{head}^{i}")
+                format!("{head}~{i}")
             };
             self.notes
                 .entry(id)
