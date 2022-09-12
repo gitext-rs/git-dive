@@ -18,8 +18,18 @@ pub fn blame(
     let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get_string(THEME_FIELD).ok();
 
-    let rev = repo
+    let rev_obj = repo
         .revparse_single(&args.rev)
+        .with_code(proc_exit::Code::CONFIG_ERR)?;
+    let rev_commit = rev_obj
+        .peel_to_commit()
+        .map_err(|_| {
+            anyhow::format_err!(
+                "Unsupported rev `{}` ({})",
+                args.rev,
+                rev_obj.kind().map(|k| k.str()).unwrap_or("unknown")
+            )
+        })
         .with_code(proc_exit::Code::CONFIG_ERR)?;
     let mut settings = git2::BlameOptions::new();
     settings
@@ -29,7 +39,7 @@ pub fn blame(
         .track_copies_any_commit_copies(true)
         .first_parent(true)
         .ignore_whitespace(true)
-        .newest_commit(rev.id());
+        .newest_commit(rev_commit.id());
     let blame = repo
         .blame_file(&args.file, Some(&mut settings))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
