@@ -1,6 +1,7 @@
 use std::io::Write;
 
 use anyhow::Context as _;
+use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
 pub fn blame(
@@ -79,9 +80,35 @@ pub fn blame(
 }
 
 fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
-    let file = std::fs::read_to_string(path)
-        .with_context(|| format!("Failed to read {}", path.display()))?;
-    Ok(file)
+    let buffer =
+        std::fs::read(path).with_context(|| format!("Could not read {}", path.display()))?;
+
+    let content_type = content_inspector::inspect(&buffer);
+
+    let buffer = match content_type {
+        content_inspector::ContentType::BINARY |
+        // HACK: We don't support UTF-32 yet
+        content_inspector::ContentType::UTF_32LE |
+        content_inspector::ContentType::UTF_32BE => {
+            anyhow::bail!("Could not ready binary file {}", path.display())
+        },
+        content_inspector::ContentType::UTF_8 |
+        content_inspector::ContentType::UTF_8_BOM => {
+            String::from_utf8_lossy(&buffer).into_owned()
+        },
+        content_inspector::ContentType::UTF_16LE => {
+            let buffer = encoding::all::UTF_16LE.decode(&buffer, encoding::DecoderTrap::Replace)
+                .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
+            buffer
+        }
+        content_inspector::ContentType::UTF_16BE => {
+            let buffer = encoding::all::UTF_16BE.decode(&buffer, encoding::DecoderTrap::Replace)
+                .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
+            buffer
+        },
+    };
+
+    Ok(buffer)
 }
 
 pub struct Highlighter<'a> {
