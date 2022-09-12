@@ -202,10 +202,10 @@ impl<'a> Highlighter<'a> {
         if let Some(highlighter) = &mut self.highlighter {
             // skip syntax highlighting on long lines
             let too_long = line.len() > 1024 * 16;
-            let for_highlighting: &str = if too_long { "\n" } else { &line };
+            let for_highlighting: &str = if too_long { "\n" } else { line };
             let mut ranges = highlighter.highlight_line(for_highlighting, syntax_set)?;
             if too_long {
-                ranges[0].1 = &line;
+                ranges[0].1 = line;
             }
 
             let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
