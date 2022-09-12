@@ -54,6 +54,22 @@ pub fn blame(
     } else {
         "".to_owned()
     };
+    let gutter_style = anstyle::Style::new()
+        .fg_color(
+            highlighter
+                .theme()
+                .settings
+                .gutter_foreground
+                .map(|c| (c.r, c.g, c.b).into()),
+        )
+        .bg_color(
+            highlighter
+                .theme()
+                .settings
+                .gutter
+                .map(|c| (c.r, c.g, c.b).into()),
+        );
+    let gutter_style = gutter_style.render();
     let wrap = textwrap::Options::new(code_width)
         .break_words(false)
         .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
@@ -74,7 +90,7 @@ pub fn blame(
             if i == 0 {
                 let _ = write!(
                     &mut stdout,
-                    "{line_num:>line_count_width$}{sep}{visual_line}\n{reset}"
+                    "{gutter_style}{line_num:>line_count_width$}{sep}{reset}{visual_line}\n{reset}"
                 );
             }
         }
@@ -117,6 +133,7 @@ fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
 
 pub struct Highlighter<'a> {
     highlighter: Option<syntect::easy::HighlightLines<'a>>,
+    theme: &'a syntect::highlighting::Theme,
 }
 
 impl<'a> Highlighter<'a> {
@@ -125,12 +142,56 @@ impl<'a> Highlighter<'a> {
         theme: &'a syntect::highlighting::Theme,
     ) -> Self {
         let highlighter = Some(syntect::easy::HighlightLines::new(syntax, theme));
-        Self { highlighter }
+        Self { highlighter, theme }
     }
 
     fn disabled() -> Self {
         let highlighter = None;
-        Self { highlighter }
+        static THEME: syntect::highlighting::Theme = syntect::highlighting::Theme {
+            name: None,
+            author: None,
+            settings: syntect::highlighting::ThemeSettings {
+                foreground: None,
+                background: None,
+                caret: None,
+                line_highlight: None,
+                misspelling: None,
+                minimap_border: None,
+                accent: None,
+                popup_css: None,
+                phantom_css: None,
+                bracket_contents_foreground: None,
+                bracket_contents_options: None,
+                brackets_foreground: None,
+                brackets_background: None,
+                brackets_options: None,
+                tags_foreground: None,
+                tags_options: None,
+                highlight: None,
+                find_highlight: None,
+                find_highlight_foreground: None,
+                gutter: None,
+                gutter_foreground: None,
+                selection: None,
+                selection_foreground: None,
+                selection_border: None,
+                inactive_selection: None,
+                inactive_selection_foreground: None,
+                guide: None,
+                active_guide: None,
+                stack_guide: None,
+                shadow: None,
+            },
+            scopes: Vec::new(),
+        };
+        Self {
+            highlighter,
+            theme: &THEME,
+        }
+    }
+
+    fn theme(&self) -> &syntect::highlighting::Theme {
+        self.theme
     }
 
     fn highlight_line(
