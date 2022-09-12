@@ -31,7 +31,10 @@ pub fn blame(
         .find_syntax_for_file(&args.file)?
         .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
-    let file = read_file(&args.file).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = std::fs::read(&args.file)
+        .with_context(|| format!("Could not read {}", args.file.display()))
+        .with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = convert_file(&file, &args.file).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let line_count = file.lines().count();
     let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
@@ -102,10 +105,7 @@ pub fn blame(
     Ok(())
 }
 
-fn read_file(path: &std::path::Path) -> anyhow::Result<String> {
-    let buffer =
-        std::fs::read(path).with_context(|| format!("Could not read {}", path.display()))?;
-
+fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String> {
     let content_type = content_inspector::inspect(&buffer);
 
     let buffer = match content_type {
