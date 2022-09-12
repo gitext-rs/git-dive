@@ -139,10 +139,10 @@ fn read_file<'r>(
         )
     })?;
     let file_entry = rev_tree
-        .get_path(&rel_path)
+        .get_path(rel_path)
         .with_context(|| format!("Could not read {} at {}", rel_path.display(), rev))?;
     let file_obj = file_entry
-        .to_object(&repo)
+        .to_object(repo)
         .with_context(|| format!("Could not read {} at {}", rel_path.display(), rev))?;
     let file_blob = file_obj
         .as_blob()
@@ -152,7 +152,7 @@ fn read_file<'r>(
 }
 
 fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String> {
-    let content_type = content_inspector::inspect(&buffer);
+    let content_type = content_inspector::inspect(buffer);
 
     let buffer = match content_type {
         content_inspector::ContentType::BINARY |
@@ -163,15 +163,15 @@ fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String>
         },
         content_inspector::ContentType::UTF_8 |
         content_inspector::ContentType::UTF_8_BOM => {
-            String::from_utf8_lossy(&buffer).into_owned()
+            String::from_utf8_lossy(buffer).into_owned()
         },
         content_inspector::ContentType::UTF_16LE => {
-            let buffer = encoding::all::UTF_16LE.decode(&buffer, encoding::DecoderTrap::Replace)
+            let buffer = encoding::all::UTF_16LE.decode(buffer, encoding::DecoderTrap::Replace)
                 .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
             buffer
         }
         content_inspector::ContentType::UTF_16BE => {
-            let buffer = encoding::all::UTF_16BE.decode(&buffer, encoding::DecoderTrap::Replace)
+            let buffer = encoding::all::UTF_16BE.decode(buffer, encoding::DecoderTrap::Replace)
                 .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
             buffer
         },
