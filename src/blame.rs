@@ -49,7 +49,11 @@ pub fn blame(
     pager::Pager::new().setup();
 
     let mut stdout = std::io::stdout().lock();
-    let reset = anstyle::Reset.render();
+    let reset = if colored_stdout {
+        anstyle::Reset.render().to_string()
+    } else {
+        "".to_owned()
+    };
     let wrap = textwrap::Options::new(code_width)
         .break_words(false)
         .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
