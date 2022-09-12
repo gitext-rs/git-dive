@@ -43,7 +43,10 @@ pub fn blame(
     let blame = repo
         .blame_file(&args.file, Some(&mut settings))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
-    let annotations = Annotations::new(&repo, &blame);
+    let mut annotations = Annotations::new(&repo, &blame);
+    annotations
+        .relative_origin(&repo, &args.rev)
+        .with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let rel_path = to_repo_relative(&args.file, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
@@ -247,29 +250,74 @@ impl Annotations {
         let mut notes = std::collections::HashMap::new();
         for hunk in blame.iter() {
             let id = hunk.orig_commit_id();
-            notes.entry(id).or_insert_with(|| {
-                let obj = repo.find_object(id, None).expect("blame has valid ids");
-                let short = obj
-                    .short_id()
-                    .unwrap_or_else(|e| panic!("unknown failure for short_id for {}: {}", id, e))
-                    .as_str()
-                    .expect("short_id is always valid UTF-8")
-                    .to_owned();
-                Annotation { short }
-            });
+            notes.entry(id).or_insert_with(|| Annotation::new(repo, id));
         }
 
         Annotations { notes }
+    }
+
+    pub fn relative_origin(&mut self, repo: &git2::Repository, head: &str) -> anyhow::Result<()> {
+        let mut queue = self
+            .notes
+            .keys()
+            .copied()
+            .collect::<std::collections::HashSet<_>>();
+
+        let rev_obj = repo.revparse_single(head)?;
+        let rev_commit = rev_obj.peel_to_commit().map_err(|_| {
+            anyhow::format_err!(
+                "Unsupported rev `{}` ({})",
+                head,
+                rev_obj.kind().map(|k| k.str()).unwrap_or("unknown")
+            )
+        })?;
+
+        let mut revwalk = repo.revwalk()?;
+        revwalk.simplify_first_parent()?;
+        revwalk.push(rev_commit.id())?;
+        for (i, id) in revwalk.enumerate() {
+            let id = id?;
+            let relative = if i == 0 {
+                head.to_owned()
+            } else {
+                format!("{head}^{i}")
+            };
+            self.notes
+                .entry(id)
+                .or_insert_with(|| Annotation::new(repo, id))
+                .relative = Some(relative);
+
+            queue.remove(&id);
+            if queue.is_empty() {
+                break;
+            }
+        }
+        Ok(())
     }
 }
 
 pub struct Annotation {
     short: String,
+    relative: Option<String>,
 }
 
 impl Annotation {
+    pub fn new(repo: &git2::Repository, id: git2::Oid) -> Self {
+        let obj = repo.find_object(id, None).expect("blame has valid ids");
+        let short = obj
+            .short_id()
+            .unwrap_or_else(|e| panic!("unknown failure for short_id for {}: {}", id, e))
+            .as_str()
+            .expect("short_id is always valid UTF-8")
+            .to_owned();
+        Self {
+            short,
+            relative: None,
+        }
+    }
+
     pub fn origin(&self) -> &str {
-        self.short.as_str()
+        self.relative.as_deref().unwrap_or(self.short.as_str())
     }
 }
 
