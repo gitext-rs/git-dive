@@ -21,6 +21,24 @@ Dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE)
 
 ## About
 
+`git-dive` is for better understanding why a change was made.  Frequently, we
+work on code bases we didn't start which have too little documentation.  Even
+worse if the original authors are not around.  `git-blame` is an invaluable
+tool for this but it requires a lot of ceremony to get the information you
+need.
+
+Features
+- Git-native experience
+- Syntax highlighting
+- More room for code by merging the SHA and Time columns into a rev column (e.g. `HEAD~10`)
+- Easier to compare timestamps via the rev column (e.g. `HEAD~10`)
+
+Planned Features
+- [Interactive pager that let's you browse through time](https://github.com/epage/git-dive/issues?q=is%3Aopen+is%3Aissue+milestone%3A%220.2+-+Interactive+Pager%22)
+
+`git-dive` was inspired by [perforce time lapse
+view](https://www.perforce.com/video-tutorials/vcs/using-time-lapse-view).
+
 ## Install
 
 [Download](https://github.com/gitext-rs/git-dive/releases) a pre-built binary
