@@ -141,7 +141,7 @@ pub fn blame(
             let line_num = if i == 0 {
                 line_num.to_string()
             } else {
-                String::new()
+                "⋮".to_owned()
             };
             let _ = write!(
                 &mut stdout,
