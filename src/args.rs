@@ -4,8 +4,12 @@
         setting = clap::AppSettings::DeriveDisplayOrder,
         dont_collapse_args_in_usage = true,
         color = concolor_clap::color_choice(),
+        allow_missing_positional = true,
     )]
 pub struct Args {
+    #[clap(action, default_value = "HEAD")]
+    pub rev: String,
+
     #[clap(action)]
     pub file: std::path::PathBuf,
 

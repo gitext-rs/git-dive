@@ -18,6 +18,9 @@ pub fn blame(
     let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get_string(THEME_FIELD).ok();
 
+    let rel_path = to_repo_relative(&args.file, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
+
     let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
     let theme_set = syntect::highlighting::ThemeSet::load_defaults();
     let theme = theme.as_deref().unwrap_or(THEME_DEFAULT);
@@ -31,9 +34,6 @@ pub fn blame(
         .find_syntax_for_file(&args.file)?
         .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
-    let file = std::fs::read(&args.file)
-        .with_context(|| format!("Could not read {}", args.file.display()))
-        .with_code(proc_exit::Code::CONFIG_ERR)?;
     let file = convert_file(&file, &args.file).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let line_count = file.lines().count();
@@ -103,6 +103,52 @@ pub fn blame(
     }
 
     Ok(())
+}
+
+fn to_repo_relative(
+    path: &std::path::Path,
+    repo: &git2::Repository,
+) -> anyhow::Result<std::path::PathBuf> {
+    let workdir = repo.workdir().ok_or_else(|| {
+        anyhow::format_err!("No workdir found; Bare repositories are not supported")
+    })?;
+    let abs_path = path
+        .canonicalize()
+        .with_context(|| anyhow::format_err!("Could not read {}", path.display()))?;
+    let rel_path = abs_path.strip_prefix(&workdir).map_err(|_| {
+        anyhow::format_err!(
+            "File {} is not in the repository's workdir {}",
+            abs_path.display(),
+            workdir.display()
+        )
+    })?;
+    Ok(rel_path.to_owned())
+}
+
+fn read_file<'r>(
+    repo: &'r git2::Repository,
+    rev: &str,
+    rel_path: &std::path::Path,
+) -> anyhow::Result<Vec<u8>> {
+    let rev_obj = repo.revparse_single(rev)?;
+    let rev_tree = rev_obj.peel_to_tree().map_err(|_| {
+        anyhow::format_err!(
+            "Unsupported rev `{}` ({})",
+            rev,
+            rev_obj.kind().map(|k| k.str()).unwrap_or("unknown")
+        )
+    })?;
+    let file_entry = rev_tree
+        .get_path(&rel_path)
+        .with_context(|| format!("Could not read {} at {}", rel_path.display(), rev))?;
+    let file_obj = file_entry
+        .to_object(&repo)
+        .with_context(|| format!("Could not read {} at {}", rel_path.display(), rev))?;
+    let file_blob = file_obj
+        .as_blob()
+        .with_context(|| format!("Could not read {} at {}", rel_path.display(), rev))?;
+    let file = file_blob.content();
+    Ok(file.to_owned())
 }
 
 fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String> {
