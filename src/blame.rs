@@ -87,12 +87,15 @@ pub fn blame(
             .highlight_line(file_line, &syntax_set)
             .with_code(proc_exit::Code::UNKNOWN)?;
         for (i, visual_line) in textwrap::wrap(&file_line, &wrap).into_iter().enumerate() {
-            if i == 0 {
-                let _ = write!(
-                    &mut stdout,
-                    "{gutter_style}{line_num:>line_count_width$}{sep}{reset}{visual_line}\n{reset}"
-                );
-            }
+            let line_num = if i == 0 {
+                line_num.to_string()
+            } else {
+                String::new()
+            };
+            let _ = write!(
+                &mut stdout,
+                "{gutter_style}{line_num:>line_count_width$}{sep}{reset}{visual_line}\n{reset}"
+            );
         }
     }
 
