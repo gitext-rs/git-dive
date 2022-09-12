@@ -57,6 +57,13 @@ pub fn blame(
 
     for (line_num, file_line) in file.lines().enumerate() {
         let line_num = line_num + 1;
+
+        let file_line = if line_num == 1 {
+            file_line.strip_prefix('\u{feff}').unwrap_or(file_line)
+        } else {
+            file_line
+        };
+
         let file_line = highlighter
             .highlight_line(file_line, &syntax_set)
             .with_code(proc_exit::Code::UNKNOWN)?;
