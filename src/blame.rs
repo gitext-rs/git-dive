@@ -135,7 +135,14 @@ impl<'a> Highlighter<'a> {
         syntax_set: &syntect::parsing::SyntaxSet,
     ) -> anyhow::Result<String> {
         if let Some(highlighter) = &mut self.highlighter {
-            let ranges = highlighter.highlight_line(line, syntax_set)?;
+            // skip syntax highlighting on long lines
+            let too_long = line.len() > 1024 * 16;
+            let for_highlighting: &str = if too_long { "\n" } else { &line };
+            let mut ranges = highlighter.highlight_line(for_highlighting, syntax_set)?;
+            if too_long {
+                ranges[0].1 = &line;
+            }
+
             let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
             Ok(escaped)
         } else {
