@@ -7,6 +7,7 @@ use proc_exit::WithCodeResultExt;
 
 mod args;
 mod blame;
+mod config;
 mod logger;
 
 fn main() {

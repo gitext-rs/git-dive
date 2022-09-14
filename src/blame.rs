@@ -4,6 +4,8 @@ use anyhow::Context as _;
 use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
+use crate::config::ConfigExt;
+
 pub fn blame(
     args: &crate::args::Args,
     colored_stdout: bool,
@@ -16,7 +18,7 @@ pub fn blame(
 
     let repo = git2::Repository::discover(".").with_code(proc_exit::Code::CONFIG_ERR)?;
     let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
-    let theme = config.get_string(THEME_FIELD).ok();
+    let theme = config.get(&THEME);
 
     let rev_obj = repo
         .revparse_single(&args.rev)
@@ -53,10 +55,9 @@ pub fn blame(
 
     let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
     let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-    let theme = theme.as_deref().unwrap_or(THEME_DEFAULT);
     let theme = theme_set
         .themes
-        .get(theme)
+        .get(&theme)
         .or_else(|| theme_set.themes.get(THEME_DEFAULT))
         .expect("default theme is present");
 
@@ -406,5 +407,6 @@ impl<'a> Highlighter<'a> {
     }
 }
 
-const THEME_FIELD: &str = "dive.theme";
 const THEME_DEFAULT: &str = "base16-ocean.dark";
+const THEME: crate::config::FallbackField<String> =
+    crate::config::RawField::<String>::new("dive.theme").fallback(|_| THEME_DEFAULT.to_owned());
