@@ -14,7 +14,8 @@ pub fn blame(
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
         .unwrap_or(80) as usize;
 
-    let repo = git2::Repository::discover(".").with_code(proc_exit::Code::CONFIG_ERR)?;
+    let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
+    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::CONFIG_ERR)?;
     let config = crate::config::Config::with_repo(&repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get(&THEME);
 
