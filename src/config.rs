@@ -19,19 +19,17 @@ pub fn dump_config(output_path: &std::path::Path) -> proc_exit::ExitResult {
 }
 
 pub struct Config {
-    configs: Vec<Box<dyn ConfigSource>>,
+    base: Option<git2::Config>,
+    env: InMemoryConfig,
+    cli: InMemoryConfig,
 }
 
 impl Config {
     pub fn with_repo(repo: &git2::Repository) -> anyhow::Result<Self> {
-        let config = repo.config().with_context(|| {
-            anyhow::format_err!("failed to read config for {}", repo.path().display())
-        })?;
-        let base: Box<dyn ConfigSource> = Box::new(config);
-        let env: Box<dyn ConfigSource> = Box::new(InMemoryConfig::git_env());
-        let cli: Box<dyn ConfigSource> = Box::new(InMemoryConfig::git_cli());
-        let configs = vec![cli, env, base];
-        Ok(Self { configs })
+        let base = repo.config().ok();
+        let env = InMemoryConfig::git_env();
+        let cli = InMemoryConfig::git_cli();
+        Ok(Self { base, env, cli })
     }
 
     pub fn get<F: Field>(&self, field: &F) -> F::Output {
@@ -60,7 +58,13 @@ impl Config {
     }
 
     pub fn sources(&self) -> impl Iterator<Item = &dyn ConfigSource> {
-        self.configs.iter().map(|s| s.as_ref())
+        [
+            Some(&self.cli).map(|c| c as &dyn ConfigSource),
+            Some(&self.env).map(|c| c as &dyn ConfigSource),
+            self.base.as_ref().map(|c| c as &dyn ConfigSource),
+        ]
+        .into_iter()
+        .flatten()
     }
 }
 
