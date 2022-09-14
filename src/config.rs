@@ -5,7 +5,8 @@ pub fn dump_config(output_path: &std::path::Path) -> proc_exit::ExitResult {
     let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
     let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::USAGE_ERR)?;
 
-    let config = crate::config::Config::with_repo(&repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let mut config = crate::config::Config::system();
+    config.add_repo(&repo);
     let output = config.dump([&crate::blame::THEME as &dyn ReflectField]);
 
     if output_path == std::path::Path::new("-") {
@@ -19,17 +20,30 @@ pub fn dump_config(output_path: &std::path::Path) -> proc_exit::ExitResult {
 }
 
 pub struct Config {
-    base: Option<git2::Config>,
+    system: Option<git2::Config>,
+    repo: Option<git2::Config>,
     env: InMemoryConfig,
     cli: InMemoryConfig,
 }
 
 impl Config {
-    pub fn with_repo(repo: &git2::Repository) -> anyhow::Result<Self> {
-        let base = repo.config().ok();
+    pub fn system() -> Self {
+        let system = git2::Config::open_default().ok();
+        let repo = None;
         let env = InMemoryConfig::git_env();
         let cli = InMemoryConfig::git_cli();
-        Ok(Self { base, env, cli })
+        Self {
+            system,
+            repo,
+            env,
+            cli,
+        }
+    }
+
+    pub fn add_repo(&mut self, repo: &git2::Repository) {
+        let config_path = git_dir_config(repo);
+        let repo = git2::Config::open(&config_path).ok();
+        self.repo = repo;
     }
 
     pub fn get<F: Field>(&self, field: &F) -> F::Output {
@@ -61,11 +75,16 @@ impl Config {
         [
             Some(&self.cli).map(|c| c as &dyn ConfigSource),
             Some(&self.env).map(|c| c as &dyn ConfigSource),
-            self.base.as_ref().map(|c| c as &dyn ConfigSource),
+            self.repo.as_ref().map(|c| c as &dyn ConfigSource),
+            self.system.as_ref().map(|c| c as &dyn ConfigSource),
         ]
         .into_iter()
         .flatten()
     }
+}
+
+fn git_dir_config(repo: &git2::Repository) -> std::path::PathBuf {
+    repo.path().join("config")
 }
 
 pub trait ConfigSource {

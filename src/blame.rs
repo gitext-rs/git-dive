@@ -17,7 +17,8 @@ pub fn blame(
 
     let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
     let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::CONFIG_ERR)?;
-    let config = crate::config::Config::with_repo(&repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let mut config = crate::config::Config::system();
+    config.add_repo(&repo);
     let theme = config.get(&THEME);
 
     let rev_obj = repo
