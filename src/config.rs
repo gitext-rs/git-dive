@@ -58,6 +58,10 @@ impl Config {
 
         output
     }
+
+    pub fn sources(&self) -> impl Iterator<Item = &dyn ConfigSource> {
+        self.configs.iter().map(|s| s.as_ref())
+    }
 }
 
 pub trait ConfigSource {
@@ -76,49 +80,64 @@ impl ConfigSource for Config {
     }
 
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
-        for config in &self.configs {
+        for config in self.sources() {
             if let Ok(v) = config.get_bool(name) {
                 return Ok(v);
             }
         }
         // Fallback to the first error
-        self.configs[0].get_bool(name)
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_bool(name)
     }
     fn get_i32(&self, name: &str) -> anyhow::Result<i32> {
-        for config in &self.configs {
+        for config in self.sources() {
             if let Ok(v) = config.get_i32(name) {
                 return Ok(v);
             }
         }
         // Fallback to the first error
-        self.configs[0].get_i32(name)
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_i32(name)
     }
     fn get_i64(&self, name: &str) -> anyhow::Result<i64> {
-        for config in &self.configs {
+        for config in self.sources() {
             if let Ok(v) = config.get_i64(name) {
                 return Ok(v);
             }
         }
         // Fallback to the first error
-        self.configs[0].get_i64(name)
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_i64(name)
     }
     fn get_string(&self, name: &str) -> anyhow::Result<String> {
-        for config in &self.configs {
+        for config in self.sources() {
             if let Ok(v) = config.get_string(name) {
                 return Ok(v);
             }
         }
         // Fallback to the first error
-        self.configs[0].get_string(name)
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_string(name)
     }
     fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
-        for config in &self.configs {
+        for config in self.sources() {
             if let Ok(v) = config.get_path(name) {
                 return Ok(v);
             }
         }
         // Fallback to the first error
-        self.configs[0].get_path(name)
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_path(name)
     }
 }
 
