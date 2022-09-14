@@ -7,7 +7,11 @@ use proc_exit::WithCodeResultExt;
 
 mod args;
 mod blame;
+mod config;
+mod git2_config;
 mod logger;
+
+use crate::git2_config::Config;
 
 fn main() {
     human_panic::setup_panic!();
@@ -16,6 +20,13 @@ fn main() {
 }
 
 fn run() -> proc_exit::ExitResult {
+    let mut config = Config::system();
+    concolor::set(match config.get(&crate::git2_config::COLOR_UI) {
+        crate::git2_config::ColorWhen::Always => concolor::ColorChoice::Always,
+        crate::git2_config::ColorWhen::Auto => concolor::ColorChoice::Auto,
+        crate::git2_config::ColorWhen::Never => concolor::ColorChoice::Never,
+    });
+
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
     let args = match args::Args::try_parse() {
         Ok(args) => args,
@@ -45,7 +56,19 @@ fn run() -> proc_exit::ExitResult {
         std::env::set_current_dir(current_dir).with_code(proc_exit::Code::USAGE_ERR)?;
     }
 
-    blame::blame(&args, colored_stdout, colored_stderr)?;
+    if let Some(output_path) = args.dump_config.as_deref() {
+        config::dump_config(output_path, &mut config)?;
+    } else if let Some(file_path) = args.file.as_deref() {
+        blame::blame(
+            file_path,
+            &mut config,
+            &args,
+            colored_stdout,
+            colored_stderr,
+        )?;
+    } else {
+        unreachable!("clap ensured a mode exists");
+    }
 
     Ok(())
 }

@@ -4,7 +4,13 @@ use anyhow::Context as _;
 use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
+use crate::git2_config::Config;
+use crate::git2_config::DefaultField;
+use crate::git2_config::RawField;
+
 pub fn blame(
+    file_path: &std::path::Path,
+    config: &mut Config,
     args: &crate::args::Args,
     colored_stdout: bool,
     _colored_stderr: bool,
@@ -14,9 +20,10 @@ pub fn blame(
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
         .unwrap_or(80) as usize;
 
-    let repo = git2::Repository::discover(".").with_code(proc_exit::Code::CONFIG_ERR)?;
-    let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
-    let theme = config.get_string(THEME_FIELD).ok();
+    let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
+    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::CONFIG_ERR)?;
+    config.add_repo(&repo);
+    let theme = config.get(&THEME);
 
     let rev_obj = repo
         .revparse_single(&args.rev)
@@ -41,30 +48,29 @@ pub fn blame(
         .ignore_whitespace(true)
         .newest_commit(rev_commit.id());
     let blame = repo
-        .blame_file(&args.file, Some(&mut settings))
+        .blame_file(file_path, Some(&mut settings))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
     let mut annotations = Annotations::new(&repo, &blame);
     annotations
         .relative_origin(&repo, &args.rev)
         .with_code(proc_exit::Code::CONFIG_ERR)?;
 
-    let rel_path = to_repo_relative(&args.file, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
     let theme_set = syntect::highlighting::ThemeSet::load_defaults();
-    let theme = theme.as_deref().unwrap_or(THEME_DEFAULT);
     let theme = theme_set
         .themes
-        .get(theme)
+        .get(&theme)
         .or_else(|| theme_set.themes.get(THEME_DEFAULT))
         .expect("default theme is present");
 
     let syntax = syntax_set
-        .find_syntax_for_file(&args.file)?
+        .find_syntax_for_file(file_path)?
         .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
-    let file = convert_file(&file, &args.file).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = convert_file(&file, file_path).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let line_count = file.lines().count();
     let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
@@ -406,5 +412,6 @@ impl<'a> Highlighter<'a> {
     }
 }
 
-const THEME_FIELD: &str = "dive.theme";
 const THEME_DEFAULT: &str = "base16-ocean.dark";
+pub const THEME: DefaultField<String> =
+    RawField::<String>::new("dive.theme").default_value(|| THEME_DEFAULT.to_owned());
