@@ -14,7 +14,7 @@ pub struct Args {
     #[clap(required = true, action, group = "mode")]
     pub file: Option<std::path::PathBuf>,
 
-    #[clap(long, action, group = "mode")]
+    #[clap(long, value_name = "PATH", action, group = "mode")]
     pub dump_config: Option<std::path::PathBuf>,
 
     /// Run as if git was started in `PATH` instead of the current working directory.
