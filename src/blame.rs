@@ -6,6 +6,7 @@ use proc_exit::WithCodeResultExt;
 
 pub fn blame(
     file_path: &std::path::Path,
+    config: &mut crate::config::Config,
     args: &crate::args::Args,
     colored_stdout: bool,
     _colored_stderr: bool,
@@ -17,7 +18,6 @@ pub fn blame(
 
     let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
     let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::CONFIG_ERR)?;
-    let mut config = crate::config::Config::system();
     config.add_repo(&repo);
     let theme = config.get(&THEME);
 

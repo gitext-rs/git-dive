@@ -1,11 +1,10 @@
 use anyhow::Context as _;
 use proc_exit::WithCodeResultExt;
 
-pub fn dump_config(output_path: &std::path::Path) -> proc_exit::ExitResult {
+pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_exit::ExitResult {
     let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
     let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::USAGE_ERR)?;
 
-    let mut config = crate::config::Config::system();
     config.add_repo(&repo);
     let output = config.dump([&crate::blame::THEME as &dyn ReflectField]);
 

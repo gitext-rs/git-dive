@@ -17,6 +17,8 @@ fn main() {
 }
 
 fn run() -> proc_exit::ExitResult {
+    let mut config = crate::config::Config::system();
+
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
     let args = match args::Args::try_parse() {
         Ok(args) => args,
@@ -47,9 +49,15 @@ fn run() -> proc_exit::ExitResult {
     }
 
     if let Some(output_path) = args.dump_config.as_deref() {
-        config::dump_config(output_path)?;
+        config::dump_config(output_path, &mut config)?;
     } else if let Some(file_path) = args.file.as_deref() {
-        blame::blame(file_path, &args, colored_stdout, colored_stderr)?;
+        blame::blame(
+            file_path,
+            &mut config,
+            &args,
+            colored_stdout,
+            colored_stderr,
+        )?;
     } else {
         unreachable!("clap ensured a mode exists");
     }
