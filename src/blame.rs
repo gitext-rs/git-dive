@@ -4,9 +4,13 @@ use anyhow::Context as _;
 use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
+use crate::git2_config::Config;
+use crate::git2_config::FallbackField;
+use crate::git2_config::RawField;
+
 pub fn blame(
     file_path: &std::path::Path,
-    config: &mut crate::config::Config,
+    config: &mut Config,
     args: &crate::args::Args,
     colored_stdout: bool,
     _colored_stderr: bool,
@@ -409,5 +413,5 @@ impl<'a> Highlighter<'a> {
 }
 
 const THEME_DEFAULT: &str = "base16-ocean.dark";
-pub const THEME: crate::config::FallbackField<String> =
-    crate::config::RawField::<String>::new("dive.theme").fallback(|_| THEME_DEFAULT.to_owned());
+pub const THEME: FallbackField<String> =
+    RawField::<String>::new("dive.theme").fallback(|_| THEME_DEFAULT.to_owned());

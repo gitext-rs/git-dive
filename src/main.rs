@@ -8,7 +8,10 @@ use proc_exit::WithCodeResultExt;
 mod args;
 mod blame;
 mod config;
+mod git2_config;
 mod logger;
+
+use crate::git2_config::Config;
 
 fn main() {
     human_panic::setup_panic!();
@@ -17,7 +20,7 @@ fn main() {
 }
 
 fn run() -> proc_exit::ExitResult {
-    let mut config = crate::config::Config::system();
+    let mut config = Config::system();
 
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
     let args = match args::Args::try_parse() {
