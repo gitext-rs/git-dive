@@ -27,8 +27,10 @@ impl Config {
         let config = repo.config().with_context(|| {
             anyhow::format_err!("failed to read config for {}", repo.path().display())
         })?;
-        let config: Box<dyn ConfigSource> = Box::new(config);
-        let configs = vec![config];
+        let base: Box<dyn ConfigSource> = Box::new(config);
+        let env: Box<dyn ConfigSource> = Box::new(InMemoryConfig::git_env());
+        let cli: Box<dyn ConfigSource> = Box::new(InMemoryConfig::git_cli());
+        let configs = vec![cli, env, base];
         Ok(Self { configs })
     }
 
@@ -139,6 +141,85 @@ impl ConfigSource for git2::Config {
     }
     fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
         self.get_path(name).map_err(|e| e.into())
+    }
+}
+
+pub struct InMemoryConfig {
+    name: String,
+    values: std::collections::BTreeMap<String, Vec<String>>,
+}
+
+impl InMemoryConfig {
+    pub fn git_env() -> Self {
+        Self::from_env("git-config-env", git_config_env::ConfigEnv::new().iter())
+    }
+
+    pub fn git_cli() -> Self {
+        Self::from_env(
+            "git-cli",
+            git_config_env::ConfigParameters::new()
+                .iter()
+                .map(|(k, v)| (k, v.unwrap_or_else(|| std::borrow::Cow::Borrowed("true")))),
+        )
+    }
+
+    pub fn from_env(
+        name: impl Into<String>,
+        env: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
+    ) -> Self {
+        let name = name.into();
+        let mut values = std::collections::BTreeMap::new();
+        for (key, value) in env {
+            values
+                .entry(key.into())
+                .or_insert_with(Vec::new)
+                .push(value.into());
+        }
+        Self { name, values }
+    }
+
+    fn get_str(&self, name: &str) -> anyhow::Result<&str> {
+        let value = self
+            .values
+            .get(name)
+            .context("field is missing")?
+            .last()
+            .expect("always at least one element");
+        Ok(value)
+    }
+}
+
+impl Default for InMemoryConfig {
+    fn default() -> Self {
+        Self {
+            name: "null".to_owned(),
+            values: Default::default(),
+        }
+    }
+}
+
+impl ConfigSource for InMemoryConfig {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
+        let v = self.get_str(name).unwrap_or("true");
+        v.parse::<bool>().map_err(|e| e.into())
+    }
+    fn get_i32(&self, name: &str) -> anyhow::Result<i32> {
+        self.get_str(name)
+            .and_then(|v| v.parse::<i32>().map_err(|e| e.into()))
+    }
+    fn get_i64(&self, name: &str) -> anyhow::Result<i64> {
+        self.get_str(name)
+            .and_then(|v| v.parse::<i64>().map_err(|e| e.into()))
+    }
+    fn get_string(&self, name: &str) -> anyhow::Result<String> {
+        self.get_str(name).map(|v| v.to_owned())
+    }
+    fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
+        self.get_string(name).map(|v| v.into())
     }
 }
 

@@ -45,6 +45,7 @@ textwrap = "0.15.0"
 anstyle = "0.2.2"
 content_inspector = "0.2.4"
 encoding = "0.2.33"
+git-config-env = "0.1.1"
 
 [target.'cfg(unix)'.dependencies]
 pager = "0.16.0"
