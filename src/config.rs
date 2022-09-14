@@ -1,7 +1,7 @@
 use anyhow::Context as _;
 
 pub struct Config {
-    config: git2::Config,
+    config: Box<dyn ConfigSource>,
 }
 
 impl Config {
@@ -9,6 +9,7 @@ impl Config {
         let config = repo.config().with_context(|| {
             anyhow::format_err!("failed to read config for {}", repo.path().display())
         })?;
+        let config = Box::new(config);
         Ok(Self { config })
     }
 
@@ -17,46 +18,95 @@ impl Config {
     }
 }
 
+pub trait ConfigSource {
+    fn name(&self) -> &str;
+
+    fn get_bool(&self, name: &str) -> anyhow::Result<bool>;
+    fn get_i32(&self, name: &str) -> anyhow::Result<i32>;
+    fn get_i64(&self, name: &str) -> anyhow::Result<i64>;
+    fn get_string(&self, name: &str) -> anyhow::Result<String>;
+    fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf>;
+}
+
+impl ConfigSource for Config {
+    fn name(&self) -> &str {
+        "git"
+    }
+
+    fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
+        self.config.get_bool(name)
+    }
+    fn get_i32(&self, name: &str) -> anyhow::Result<i32> {
+        self.config.get_i32(name)
+    }
+    fn get_i64(&self, name: &str) -> anyhow::Result<i64> {
+        self.config.get_i64(name)
+    }
+    fn get_string(&self, name: &str) -> anyhow::Result<String> {
+        self.config.get_string(name)
+    }
+    fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
+        self.config.get_path(name)
+    }
+}
+
+impl ConfigSource for git2::Config {
+    fn name(&self) -> &str {
+        "git"
+    }
+
+    fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
+        self.get_bool(name).map_err(|e| e.into())
+    }
+    fn get_i32(&self, name: &str) -> anyhow::Result<i32> {
+        self.get_i32(name).map_err(|e| e.into())
+    }
+    fn get_i64(&self, name: &str) -> anyhow::Result<i64> {
+        self.get_i64(name).map_err(|e| e.into())
+    }
+    fn get_string(&self, name: &str) -> anyhow::Result<String> {
+        self.get_string(name).map_err(|e| e.into())
+    }
+    fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
+        self.get_path(name).map_err(|e| e.into())
+    }
+}
+
 pub trait FieldReader<T> {
     fn get_field(&self, name: &str) -> anyhow::Result<T>;
 }
 
-impl FieldReader<bool> for Config {
+impl<C: ConfigSource> FieldReader<bool> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<bool> {
-        self.config
-            .get_bool(name)
+        self.get_bool(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<i32> for Config {
+impl<C: ConfigSource> FieldReader<i32> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<i32> {
-        self.config
-            .get_i32(name)
+        self.get_i32(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<i64> for Config {
+impl<C: ConfigSource> FieldReader<i64> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<i64> {
-        self.config
-            .get_i64(name)
+        self.get_i64(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<String> for Config {
+impl<C: ConfigSource> FieldReader<String> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<String> {
-        self.config
-            .get_string(name)
+        self.get_string(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<std::path::PathBuf> for Config {
+impl<C: ConfigSource> FieldReader<std::path::PathBuf> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
-        self.config
-            .get_path(name)
+        self.get_path(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
