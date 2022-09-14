@@ -5,6 +5,7 @@ use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
 pub fn blame(
+    file_path: &std::path::Path,
     args: &crate::args::Args,
     colored_stdout: bool,
     _colored_stderr: bool,
@@ -42,14 +43,14 @@ pub fn blame(
         .ignore_whitespace(true)
         .newest_commit(rev_commit.id());
     let blame = repo
-        .blame_file(&args.file, Some(&mut settings))
+        .blame_file(file_path, Some(&mut settings))
         .with_code(proc_exit::Code::CONFIG_ERR)?;
     let mut annotations = Annotations::new(&repo, &blame);
     annotations
         .relative_origin(&repo, &args.rev)
         .with_code(proc_exit::Code::CONFIG_ERR)?;
 
-    let rel_path = to_repo_relative(&args.file, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
@@ -61,10 +62,10 @@ pub fn blame(
         .expect("default theme is present");
 
     let syntax = syntax_set
-        .find_syntax_for_file(&args.file)?
+        .find_syntax_for_file(file_path)?
         .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
-    let file = convert_file(&file, &args.file).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = convert_file(&file, file_path).with_code(proc_exit::Code::CONFIG_ERR)?;
 
     let line_count = file.lines().count();
     let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
@@ -407,5 +408,5 @@ impl<'a> Highlighter<'a> {
 }
 
 const THEME_DEFAULT: &str = "base16-ocean.dark";
-const THEME: crate::config::FallbackField<String> =
+pub const THEME: crate::config::FallbackField<String> =
     crate::config::RawField::<String>::new("dive.theme").fallback(|_| THEME_DEFAULT.to_owned());

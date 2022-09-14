@@ -1,4 +1,22 @@
 use anyhow::Context as _;
+use proc_exit::WithCodeResultExt;
+
+pub fn dump_config(output_path: &std::path::Path) -> proc_exit::ExitResult {
+    let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
+    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::USAGE_ERR)?;
+
+    let config = crate::config::Config::with_repo(&repo).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let output = config.dump([&crate::blame::THEME as &dyn ReflectField]);
+
+    if output_path == std::path::Path::new("-") {
+        use std::io::Write;
+        std::io::stdout().write_all(output.as_bytes())?;
+    } else {
+        std::fs::write(output_path, &output)?;
+    }
+
+    Ok(())
+}
 
 pub struct Config {
     config: Box<dyn ConfigSource>,
@@ -15,6 +33,27 @@ impl Config {
 
     pub fn get<F: Field>(&self, field: &F) -> F::Output {
         field.get_from(&self)
+    }
+
+    pub fn dump<'f>(&self, fields: impl IntoIterator<Item = &'f dyn ReflectField>) -> String {
+        use std::fmt::Write;
+
+        let mut output = String::new();
+
+        let mut prior_section = "";
+        for field in fields {
+            let (section, name) = field
+                .name()
+                .split_once('.')
+                .unwrap_or_else(|| panic!("field `{}` is missing a section", field.name()));
+            if section != prior_section {
+                let _ = writeln!(&mut output, "[{}]", section);
+                prior_section = section;
+            }
+            let _ = writeln!(&mut output, "\t{} = {}", name, field.dump(self));
+        }
+
+        output
     }
 }
 
@@ -114,6 +153,7 @@ impl<C: ConfigSource> FieldReader<std::path::PathBuf> for C {
 pub trait Field {
     type Output;
 
+    fn name(&self) -> &'static str;
     fn get_from(&self, config: &Config) -> Self::Output;
 }
 
@@ -144,6 +184,10 @@ where
 {
     type Output = Option<R>;
 
+    fn name(&self) -> &'static str {
+        self.name
+    }
+
     fn get_from(&self, config: &Config) -> Self::Output {
         config.get_field(self.name).ok()
     }
@@ -162,9 +206,33 @@ where
 {
     type Output = R;
 
+    fn name(&self) -> &'static str {
+        self.field.name()
+    }
+
     fn get_from(&self, config: &Config) -> Self::Output {
         self.field
             .get_from(config)
             .unwrap_or_else(|| (self.fallback)(config))
+    }
+}
+
+pub trait ReflectField {
+    fn name(&self) -> &'static str;
+
+    fn dump(&self, config: &Config) -> String;
+}
+
+impl<F> ReflectField for F
+where
+    F: Field,
+    F::Output: std::fmt::Display,
+{
+    fn name(&self) -> &'static str {
+        self.name()
+    }
+
+    fn dump(&self, config: &Config) -> String {
+        self.get_from(config).to_string()
     }
 }

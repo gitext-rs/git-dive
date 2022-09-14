@@ -6,12 +6,16 @@
         color = concolor_clap::color_choice(),
         allow_missing_positional = true,
     )]
+#[clap(group = clap::ArgGroup::new("mode").multiple(false).required(true))]
 pub struct Args {
     #[clap(action, default_value = "HEAD")]
     pub rev: String,
 
-    #[clap(action)]
-    pub file: std::path::PathBuf,
+    #[clap(required = true, action, group = "mode")]
+    pub file: Option<std::path::PathBuf>,
+
+    #[clap(long, action, group = "mode")]
+    pub dump_config: Option<std::path::PathBuf>,
 
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///

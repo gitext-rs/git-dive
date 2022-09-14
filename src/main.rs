@@ -46,7 +46,13 @@ fn run() -> proc_exit::ExitResult {
         std::env::set_current_dir(current_dir).with_code(proc_exit::Code::USAGE_ERR)?;
     }
 
-    blame::blame(&args, colored_stdout, colored_stderr)?;
+    if let Some(output_path) = args.dump_config.as_deref() {
+        config::dump_config(output_path)?;
+    } else if let Some(file_path) = args.file.as_deref() {
+        blame::blame(file_path, &args, colored_stdout, colored_stderr)?;
+    } else {
+        unreachable!("clap ensured a mode exists");
+    }
 
     Ok(())
 }
