@@ -28,7 +28,7 @@ impl Config {
     }
 
     pub fn get<F: Field>(&self, field: &F) -> F::Output {
-        field.get_from(&self)
+        field.get_from(self)
     }
 
     pub fn dump<'f>(&self, fields: impl IntoIterator<Item = &'f dyn ReflectField>) -> String {
@@ -182,7 +182,7 @@ impl InMemoryConfig {
             "git-cli",
             git_config_env::ConfigParameters::new()
                 .iter()
-                .map(|(k, v)| (k, v.unwrap_or_else(|| std::borrow::Cow::Borrowed("true")))),
+                .map(|(k, v)| (k, v.unwrap_or(std::borrow::Cow::Borrowed("true")))),
         )
     }
 
@@ -289,7 +289,7 @@ impl<P: Parseable, C: ConfigSource> FieldReader<P> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<P> {
         self.get_string(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
-            .and_then(|s| P::parse(&s).map_err(|e| e.into()))
+            .and_then(|s| P::parse(&s))
     }
 }
 
@@ -326,7 +326,7 @@ where
     T::Err: Into<anyhow::Error>,
 {
     fn parse(s: &str) -> anyhow::Result<Self> {
-        <Self as std::str::FromStr>::from_str(s).map_err(|e| e.into())
+        <Self as std::str::FromStr>::from_str(s)
     }
     fn dump(&self) -> String {
         ToString::to_string(self)
@@ -356,7 +356,7 @@ impl<R> RawField<R> {
     pub const fn default_value(self, default: DefaultFn<R>) -> DefaultField<R> {
         DefaultField {
             field: self,
-            default: default,
+            default,
         }
     }
 }
@@ -476,7 +476,7 @@ impl std::str::FromStr for ColorWhen {
 
 impl Parseable for ColorWhen {
     fn parse(s: &str) -> anyhow::Result<Self> {
-        <Self as std::str::FromStr>::from_str(s).map_err(|e| e.into())
+        <Self as std::str::FromStr>::from_str(s)
     }
     fn dump(&self) -> String {
         self.to_string()
