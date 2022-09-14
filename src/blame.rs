@@ -4,8 +4,6 @@ use anyhow::Context as _;
 use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
-use crate::config::ConfigExt;
-
 pub fn blame(
     args: &crate::args::Args,
     colored_stdout: bool,
@@ -17,7 +15,7 @@ pub fn blame(
         .unwrap_or(80) as usize;
 
     let repo = git2::Repository::discover(".").with_code(proc_exit::Code::CONFIG_ERR)?;
-    let config = repo.config().with_code(proc_exit::Code::CONFIG_ERR)?;
+    let config = crate::config::Config::with_repo(&repo).with_code(proc_exit::Code::CONFIG_ERR)?;
     let theme = config.get(&THEME);
 
     let rev_obj = repo

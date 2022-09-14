@@ -1,12 +1,19 @@
 use anyhow::Context as _;
 
-pub trait ConfigExt {
-    fn get<F: Field>(&self, field: &F) -> F::Output;
+pub struct Config {
+    config: git2::Config,
 }
 
-impl ConfigExt for git2::Config {
-    fn get<F: Field>(&self, field: &F) -> F::Output {
-        field.get_from(self)
+impl Config {
+    pub fn with_repo(repo: &git2::Repository) -> anyhow::Result<Self> {
+        let config = repo.config().with_context(|| {
+            anyhow::format_err!("failed to read config for {}", repo.path().display())
+        })?;
+        Ok(Self { config })
+    }
+
+    pub fn get<F: Field>(&self, field: &F) -> F::Output {
+        field.get_from(&self)
     }
 }
 
@@ -14,37 +21,42 @@ pub trait FieldReader<T> {
     fn get_field(&self, name: &str) -> anyhow::Result<T>;
 }
 
-impl FieldReader<bool> for git2::Config {
+impl FieldReader<bool> for Config {
     fn get_field(&self, name: &str) -> anyhow::Result<bool> {
-        self.get_bool(name)
+        self.config
+            .get_bool(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<i32> for git2::Config {
+impl FieldReader<i32> for Config {
     fn get_field(&self, name: &str) -> anyhow::Result<i32> {
-        self.get_i32(name)
+        self.config
+            .get_i32(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<i64> for git2::Config {
+impl FieldReader<i64> for Config {
     fn get_field(&self, name: &str) -> anyhow::Result<i64> {
-        self.get_i64(name)
+        self.config
+            .get_i64(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<String> for git2::Config {
+impl FieldReader<String> for Config {
     fn get_field(&self, name: &str) -> anyhow::Result<String> {
-        self.get_string(name)
+        self.config
+            .get_string(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
 
-impl FieldReader<std::path::PathBuf> for git2::Config {
+impl FieldReader<std::path::PathBuf> for Config {
     fn get_field(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
-        self.get_path(name)
+        self.config
+            .get_path(name)
             .with_context(|| anyhow::format_err!("failed to read `{}`", name))
     }
 }
@@ -52,7 +64,7 @@ impl FieldReader<std::path::PathBuf> for git2::Config {
 pub trait Field {
     type Output;
 
-    fn get_from(&self, config: &git2::Config) -> Self::Output;
+    fn get_from(&self, config: &Config) -> Self::Output;
 }
 
 pub struct RawField<R> {
@@ -78,16 +90,16 @@ impl<R> RawField<R> {
 
 impl<R> Field for RawField<R>
 where
-    git2::Config: FieldReader<R>,
+    Config: FieldReader<R>,
 {
     type Output = Option<R>;
 
-    fn get_from(&self, config: &git2::Config) -> Self::Output {
+    fn get_from(&self, config: &Config) -> Self::Output {
         config.get_field(self.name).ok()
     }
 }
 
-type FallbackFn<R> = fn(&git2::Config) -> R;
+type FallbackFn<R> = fn(&Config) -> R;
 
 pub struct FallbackField<R> {
     field: RawField<R>,
@@ -96,11 +108,11 @@ pub struct FallbackField<R> {
 
 impl<R> Field for FallbackField<R>
 where
-    git2::Config: FieldReader<R>,
+    Config: FieldReader<R>,
 {
     type Output = R;
 
-    fn get_from(&self, config: &git2::Config) -> Self::Output {
+    fn get_from(&self, config: &Config) -> Self::Output {
         self.field
             .get_from(config)
             .unwrap_or_else(|| (self.fallback)(config))
