@@ -21,6 +21,11 @@ fn main() {
 
 fn run() -> proc_exit::ExitResult {
     let mut config = Config::system();
+    concolor::set(match config.get(&crate::git2_config::COLOR_UI) {
+        crate::git2_config::ColorWhen::Always => concolor::ColorChoice::Always,
+        crate::git2_config::ColorWhen::Auto => concolor::ColorChoice::Auto,
+        crate::git2_config::ColorWhen::Never => concolor::ColorChoice::Never,
+    });
 
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
     let args = match args::Args::try_parse() {

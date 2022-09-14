@@ -285,6 +285,54 @@ impl<C: ConfigSource> FieldReader<std::path::PathBuf> for C {
     }
 }
 
+impl<P: Parseable, C: ConfigSource> FieldReader<P> for C {
+    fn get_field(&self, name: &str) -> anyhow::Result<P> {
+        self.get_string(name)
+            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .and_then(|s| P::parse(&s).map_err(|e| e.into()))
+    }
+}
+
+pub trait Parseable: Sized {
+    fn parse(s: &str) -> anyhow::Result<Self>;
+    fn dump(&self) -> String;
+}
+
+pub struct ParseWrapper<T>(pub T);
+
+impl<T: std::fmt::Display> std::fmt::Display for ParseWrapper<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl<T> std::str::FromStr for ParseWrapper<T>
+where
+    T: std::str::FromStr,
+    T::Err: Into<anyhow::Error>,
+{
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        T::from_str(s).map(ParseWrapper).map_err(|e| e.into())
+    }
+}
+
+impl<T> Parseable for ParseWrapper<T>
+where
+    T: Parseable,
+    T: std::str::FromStr,
+    T: std::fmt::Display,
+    T::Err: Into<anyhow::Error>,
+{
+    fn parse(s: &str) -> anyhow::Result<Self> {
+        <Self as std::str::FromStr>::from_str(s).map_err(|e| e.into())
+    }
+    fn dump(&self) -> String {
+        ToString::to_string(self)
+    }
+}
+
 pub trait Field {
     type Output;
 
@@ -317,7 +365,6 @@ impl<R> RawField<R>
 where
     R: Default,
 {
-    #[allow(dead_code)]
     pub const fn default(self) -> DefaultField<R> {
         DefaultField {
             field: self,
@@ -384,3 +431,56 @@ where
         self.get_from(config).to_string()
     }
 }
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum ColorWhen {
+    Always,
+    Auto,
+    Never,
+}
+
+impl ColorWhen {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Always => "always",
+            Self::Auto => "auto",
+            Self::Never => "never",
+        }
+    }
+}
+
+impl Default for ColorWhen {
+    fn default() -> Self {
+        Self::Auto
+    }
+}
+
+impl std::fmt::Display for ColorWhen {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}
+
+impl std::str::FromStr for ColorWhen {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "always" | "true" => Ok(Self::Always),
+            "auto" => Ok(Self::Auto),
+            "never" | "false" => Ok(Self::Never),
+            _ => Err(anyhow::format_err!("unsupported color valued: `{}`", s)),
+        }
+    }
+}
+
+impl Parseable for ColorWhen {
+    fn parse(s: &str) -> anyhow::Result<Self> {
+        <Self as std::str::FromStr>::from_str(s).map_err(|e| e.into())
+    }
+    fn dump(&self) -> String {
+        self.to_string()
+    }
+}
+
+pub const COLOR_UI: DefaultField<ColorWhen> = RawField::<ColorWhen>::new("color.ui").default();

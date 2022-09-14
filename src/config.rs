@@ -8,7 +8,10 @@ pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_e
     let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::USAGE_ERR)?;
 
     config.add_repo(&repo);
-    let output = config.dump([&crate::blame::THEME as &dyn ReflectField]);
+    let output = config.dump([
+        &crate::git2_config::COLOR_UI as &dyn ReflectField,
+        &crate::blame::THEME as &dyn ReflectField,
+    ]);
 
     if output_path == std::path::Path::new("-") {
         use std::io::Write;
