@@ -5,7 +5,7 @@ use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
 use crate::git2_config::Config;
-use crate::git2_config::FallbackField;
+use crate::git2_config::DefaultField;
 use crate::git2_config::RawField;
 
 pub fn blame(
@@ -413,5 +413,5 @@ impl<'a> Highlighter<'a> {
 }
 
 const THEME_DEFAULT: &str = "base16-ocean.dark";
-pub const THEME: FallbackField<String> =
-    RawField::<String>::new("dive.theme").fallback(|_| THEME_DEFAULT.to_owned());
+pub const THEME: DefaultField<String> =
+    RawField::<String>::new("dive.theme").default_value(|| THEME_DEFAULT.to_owned());

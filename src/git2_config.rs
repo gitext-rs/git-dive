@@ -305,10 +305,23 @@ impl<R> RawField<R> {
         }
     }
 
-    pub const fn fallback(self, fallback: FallbackFn<R>) -> FallbackField<R> {
-        FallbackField {
+    pub const fn default_value(self, default: DefaultFn<R>) -> DefaultField<R> {
+        DefaultField {
             field: self,
-            fallback,
+            default: default,
+        }
+    }
+}
+
+impl<R> RawField<R>
+where
+    R: Default,
+{
+    #[allow(dead_code)]
+    pub const fn default(self) -> DefaultField<R> {
+        DefaultField {
+            field: self,
+            default: R::default,
         }
     }
 }
@@ -328,14 +341,14 @@ where
     }
 }
 
-type FallbackFn<R> = fn(&Config) -> R;
+type DefaultFn<R> = fn() -> R;
 
-pub struct FallbackField<R> {
+pub struct DefaultField<R> {
     field: RawField<R>,
-    fallback: FallbackFn<R>,
+    default: DefaultFn<R>,
 }
 
-impl<R> Field for FallbackField<R>
+impl<R> Field for DefaultField<R>
 where
     Config: FieldReader<R>,
 {
@@ -348,7 +361,7 @@ where
     fn get_from(&self, config: &Config) -> Self::Output {
         self.field
             .get_from(config)
-            .unwrap_or_else(|| (self.fallback)(config))
+            .unwrap_or_else(|| (self.default)())
     }
 }
 
