@@ -32,6 +32,7 @@ Features
 - Syntax highlighting
 - More room for code by merging the SHA and Time columns into a rev column (e.g. `HEAD~10`)
 - Easier to compare timestamps via the rev column (e.g. `HEAD~10`)
+- Easy to find relevant config with `git dive --dump-config -`
 
 Planned Features
 - [Interactive pager that let's you browse through time](https://github.com/epage/git-dive/issues?q=is%3Aopen+is%3Aissue+milestone%3A%220.2+-+Interactive+Pager%22)
