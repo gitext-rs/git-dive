@@ -30,8 +30,10 @@ need.
 Features
 - Git-native experience
 - Syntax highlighting
-- More room for code by merging the SHA and Time columns into a rev column (e.g. `HEAD~10`)
-- Easier to compare timestamps via the rev column (e.g. `HEAD~10`)
+- Focuses on relative references (e.g. `HEAD~10`)
+  - More room for code by merging the SHA and Time columns into a rev column
+  - Easier to compare timestamps via the rev column (e.g. `HEAD~10`)
+  - Easier to remember, avoiding the need for copy/pasting SHAs
 - Easy to find relevant config with `git dive --dump-config -`
 
 Planned Features
