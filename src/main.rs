@@ -9,6 +9,7 @@ mod args;
 mod blame;
 mod config;
 mod git2_config;
+mod git_pager;
 mod logger;
 
 use crate::git2_config::Config;

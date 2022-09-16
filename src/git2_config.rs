@@ -581,3 +581,6 @@ impl Parseable for ColorWhen {
 }
 
 pub const COLOR_UI: DefaultField<ColorWhen> = RawField::<ColorWhen>::new("color.ui").default();
+
+pub const PAGER: DefaultField<String> =
+    RawField::<String>::new("core.pager").default_value(|| "less".to_owned());

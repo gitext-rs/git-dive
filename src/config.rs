@@ -10,6 +10,7 @@ pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_e
     config.add_repo(&repo);
     let output = config.dump([
         &crate::git2_config::COLOR_UI as &dyn ReflectField,
+        &crate::git2_config::PAGER as &dyn ReflectField,
         &crate::blame::THEME as &dyn ReflectField,
     ]);
 
