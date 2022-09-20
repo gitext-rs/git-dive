@@ -295,7 +295,6 @@ impl<P: Parseable, C: ConfigSource> FieldReader<P> for C {
 
 pub trait Parseable: Sized {
     fn parse(s: &str) -> anyhow::Result<Self>;
-    fn dump(&self) -> String;
 }
 
 pub struct ParseWrapper<T>(pub T);
@@ -327,9 +326,6 @@ where
 {
     fn parse(s: &str) -> anyhow::Result<Self> {
         <Self as std::str::FromStr>::from_str(s)
-    }
-    fn dump(&self) -> String {
-        ToString::to_string(self)
     }
 }
 
@@ -477,9 +473,6 @@ impl std::str::FromStr for ColorWhen {
 impl Parseable for ColorWhen {
     fn parse(s: &str) -> anyhow::Result<Self> {
         <Self as std::str::FromStr>::from_str(s)
-    }
-    fn dump(&self) -> String {
-        self.to_string()
     }
 }
 
