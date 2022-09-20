@@ -1,30 +1,35 @@
 use anyhow::Context as _;
 
 pub struct Config {
-    system: Option<git2::Config>,
-    repo: Option<git2::Config>,
+    system: Option<GitConfig>,
+    xdg: Option<GitConfig>,
+    global: Option<GitConfig>,
+    local: Option<GitConfig>,
     env: InMemoryConfig,
     cli: InMemoryConfig,
 }
 
 impl Config {
     pub fn system() -> Self {
-        let system = git2::Config::open_default().ok();
-        let repo = None;
+        let system = GitConfig::open_system();
+        let xdg = GitConfig::open_xdg();
+        let global = GitConfig::open_global();
+        let local = None;
         let env = InMemoryConfig::git_env();
         let cli = InMemoryConfig::git_cli();
         Self {
             system,
-            repo,
+            xdg,
+            global,
+            local,
             env,
             cli,
         }
     }
 
     pub fn add_repo(&mut self, repo: &git2::Repository) {
-        let config_path = git_dir_config(repo);
-        let repo = git2::Config::open(&config_path).ok();
-        self.repo = repo;
+        let local = GitConfig::open_local(repo);
+        self.local = local;
     }
 
     pub fn get<F: Field>(&self, field: &F) -> F::Output {
@@ -56,16 +61,14 @@ impl Config {
         [
             Some(&self.cli).map(|c| c as &dyn ConfigSource),
             Some(&self.env).map(|c| c as &dyn ConfigSource),
-            self.repo.as_ref().map(|c| c as &dyn ConfigSource),
+            self.local.as_ref().map(|c| c as &dyn ConfigSource),
+            self.global.as_ref().map(|c| c as &dyn ConfigSource),
+            self.xdg.as_ref().map(|c| c as &dyn ConfigSource),
             self.system.as_ref().map(|c| c as &dyn ConfigSource),
         ]
         .into_iter()
         .flatten()
     }
-}
-
-fn git_dir_config(repo: &git2::Repository) -> std::path::PathBuf {
-    repo.path().join("config")
 }
 
 pub trait ConfigSource {
@@ -147,7 +150,7 @@ impl ConfigSource for Config {
 
 impl ConfigSource for git2::Config {
     fn name(&self) -> &str {
-        "git"
+        "gitconfig"
     }
 
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
@@ -164,6 +167,67 @@ impl ConfigSource for git2::Config {
     }
     fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
         self.get_path(name).map_err(|e| e.into())
+    }
+}
+
+pub struct GitConfig {
+    name: String,
+    config: git2::Config,
+}
+
+impl GitConfig {
+    pub fn open_system() -> Option<Self> {
+        let path = git2::Config::find_system().ok()?;
+        Self::open_path(&path)
+    }
+
+    pub fn open_xdg() -> Option<Self> {
+        let path = git2::Config::find_xdg().ok()?;
+        Self::open_path(&path)
+    }
+
+    pub fn open_global() -> Option<Self> {
+        let path = git2::Config::find_global().ok()?;
+        Self::open_path(&path)
+    }
+
+    pub fn open_local(repo: &git2::Repository) -> Option<Self> {
+        let path = repo.path().join("config");
+        let config = git2::Config::open(&path).ok()?;
+        let name = "$GIT_DIR/config".to_owned();
+        Some(Self { name, config })
+    }
+
+    fn open_path(path: &std::path::Path) -> Option<Self> {
+        let config = git2::Config::open(path).ok()?;
+        let name = path.display().to_string();
+        Some(Self { name, config })
+    }
+
+    fn inner(&self) -> &impl ConfigSource {
+        &self.config
+    }
+}
+
+impl ConfigSource for GitConfig {
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
+        self.inner().get_bool(name)
+    }
+    fn get_i32(&self, name: &str) -> anyhow::Result<i32> {
+        self.inner().get_i32(name)
+    }
+    fn get_i64(&self, name: &str) -> anyhow::Result<i64> {
+        self.inner().get_i64(name)
+    }
+    fn get_string(&self, name: &str) -> anyhow::Result<String> {
+        self.inner().get_string(name)
+    }
+    fn get_path(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
+        self.inner().get_path(name)
     }
 }
 
