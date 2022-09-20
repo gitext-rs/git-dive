@@ -51,7 +51,9 @@ impl Config {
                 let _ = writeln!(&mut output, "[{}]", section);
                 prior_section = section;
             }
-            let _ = writeln!(&mut output, "\t{} = {}", name, field.dump(self));
+            let value = field.dump(self);
+            let source = field.get_source(self);
+            let _ = writeln!(&mut output, "\t{} = {}  # {}", name, value, source);
         }
 
         output
@@ -74,6 +76,7 @@ impl Config {
 pub trait ConfigSource {
     fn name(&self) -> &str;
 
+    fn get_source(&self, name: &str) -> anyhow::Result<&str>;
     fn get_bool(&self, name: &str) -> anyhow::Result<bool>;
     fn get_i32(&self, name: &str) -> anyhow::Result<i32>;
     fn get_i64(&self, name: &str) -> anyhow::Result<i64>;
@@ -84,6 +87,19 @@ pub trait ConfigSource {
 impl ConfigSource for Config {
     fn name(&self) -> &str {
         "git"
+    }
+
+    fn get_source(&self, name: &str) -> anyhow::Result<&str> {
+        for config in self.sources() {
+            if let Ok(source) = config.get_source(name) {
+                return Ok(source);
+            }
+        }
+        // Fallback to the first error
+        self.sources()
+            .next()
+            .expect("always a source")
+            .get_source(name)
     }
 
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
@@ -153,6 +169,11 @@ impl ConfigSource for git2::Config {
         "gitconfig"
     }
 
+    fn get_source(&self, name: &str) -> anyhow::Result<&str> {
+        self.get_entry(name)
+            .map(|_| self.name())
+            .map_err(|e| e.into())
+    }
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
         self.get_bool(name).map_err(|e| e.into())
     }
@@ -214,6 +235,9 @@ impl ConfigSource for GitConfig {
         &self.name
     }
 
+    fn get_source(&self, name: &str) -> anyhow::Result<&str> {
+        self.inner().get_source(name)
+    }
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
         self.inner().get_bool(name)
     }
@@ -290,6 +314,9 @@ impl ConfigSource for InMemoryConfig {
         &self.name
     }
 
+    fn get_source(&self, name: &str) -> anyhow::Result<&str> {
+        self.get_str(name).map(|_| self.name())
+    }
     fn get_bool(&self, name: &str) -> anyhow::Result<bool> {
         let v = self.get_str(name).unwrap_or("true");
         v.parse::<bool>().map_err(|e| e.into())
@@ -398,6 +425,7 @@ pub trait Field {
 
     fn name(&self) -> &'static str;
     fn get_from(&self, config: &Config) -> Self::Output;
+    fn get_source<'c>(&self, config: &'c Config) -> Option<&'c str>;
 }
 
 pub struct RawField<R> {
@@ -446,6 +474,10 @@ where
     fn get_from(&self, config: &Config) -> Self::Output {
         config.get_field(self.name).ok()
     }
+
+    fn get_source<'c>(&self, config: &'c Config) -> Option<&'c str> {
+        config.get_source(self.name).ok()
+    }
 }
 
 type DefaultFn<R> = fn() -> R;
@@ -470,12 +502,17 @@ where
             .get_from(config)
             .unwrap_or_else(|| (self.default)())
     }
+
+    fn get_source<'c>(&self, config: &'c Config) -> Option<&'c str> {
+        Some(self.field.get_source(config).unwrap_or("default"))
+    }
 }
 
 pub trait ReflectField {
     fn name(&self) -> &'static str;
 
     fn dump(&self, config: &Config) -> String;
+    fn get_source<'c>(&self, config: &'c Config) -> &'c str;
 }
 
 impl<F> ReflectField for F
@@ -489,6 +526,9 @@ where
 
     fn dump(&self, config: &Config) -> String {
         self.get_from(config).to_string()
+    }
+    fn get_source<'c>(&self, config: &'c Config) -> &'c str {
+        F::get_source(self, config).expect("assuming if its Display then it has a source")
     }
 }
 
