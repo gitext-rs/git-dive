@@ -402,6 +402,7 @@ version = "0.0.1"
 dependencies = [
  "anstyle",
  "anyhow",
+ "atty",
  "clap",
  "clap-verbosity-flag",
  "concolor",
@@ -413,8 +414,8 @@ dependencies = [
  "git2",
  "human-panic",
  "log",
- "pager",
  "proc-exit",
+ "shlex",
  "syntect",
  "terminal_size",
  "textwrap",
@@ -650,16 +651,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pager"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05c7d08cf0d0b55c4f0ffedb5e06569ea212e85d622975071370393970491968"
-dependencies = [
- "errno",
- "libc",
-]
-
-[[package]]
 name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -804,6 +795,12 @@ dependencies = [
  "ryu",
  "serde",
 ]
+
+[[package]]
+name = "shlex"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 
 [[package]]
 name = "smawk"

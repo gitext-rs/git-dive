@@ -1,29 +1,36 @@
 use anyhow::Context as _;
 
+#[derive(Debug)]
 pub struct Config {
+    pager: InMemoryConfig,
     system: Option<GitConfig>,
     xdg: Option<GitConfig>,
     global: Option<GitConfig>,
     local: Option<GitConfig>,
     env: InMemoryConfig,
     cli: InMemoryConfig,
+    git_pager: InMemoryConfig,
 }
 
 impl Config {
     pub fn system() -> Self {
+        let pager = InMemoryConfig::pager();
         let system = GitConfig::open_system();
         let xdg = GitConfig::open_xdg();
         let global = GitConfig::open_global();
         let local = None;
         let env = InMemoryConfig::git_env();
         let cli = InMemoryConfig::git_cli();
+        let git_pager = InMemoryConfig::git_pager();
         Self {
+            pager,
             system,
             xdg,
             global,
             local,
             env,
             cli,
+            git_pager,
         }
     }
 
@@ -61,12 +68,14 @@ impl Config {
 
     pub fn sources(&self) -> impl Iterator<Item = &dyn ConfigSource> {
         [
+            Some(&self.git_pager).map(|c| c as &dyn ConfigSource),
             Some(&self.cli).map(|c| c as &dyn ConfigSource),
             Some(&self.env).map(|c| c as &dyn ConfigSource),
             self.local.as_ref().map(|c| c as &dyn ConfigSource),
             self.global.as_ref().map(|c| c as &dyn ConfigSource),
             self.xdg.as_ref().map(|c| c as &dyn ConfigSource),
             self.system.as_ref().map(|c| c as &dyn ConfigSource),
+            Some(&self.pager).map(|c| c as &dyn ConfigSource),
         ]
         .into_iter()
         .flatten()
@@ -255,6 +264,15 @@ impl ConfigSource for GitConfig {
     }
 }
 
+impl std::fmt::Debug for GitConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GitConfig")
+            .field("name", &self.name)
+            .finish()
+    }
+}
+
+#[derive(Debug)]
 pub struct InMemoryConfig {
     name: String,
     values: std::collections::BTreeMap<String, Vec<String>>,
@@ -272,6 +290,18 @@ impl InMemoryConfig {
                 .iter()
                 .map(|(k, v)| (k, v.unwrap_or(std::borrow::Cow::Borrowed("true")))),
         )
+    }
+
+    pub fn git_pager() -> Self {
+        let name = "GIT_PAGER";
+        let value = std::env::var_os(name).and_then(|v| v.into_string().ok());
+        Self::from_env(name, value.map(|v| ("core.pager", v)))
+    }
+
+    pub fn pager() -> Self {
+        let name = "PAGER";
+        let value = std::env::var_os(name).and_then(|v| v.into_string().ok());
+        Self::from_env(name, value.map(|v| ("core.pager", v)))
     }
 
     pub fn from_env(
@@ -581,3 +611,6 @@ impl Parseable for ColorWhen {
 }
 
 pub const COLOR_UI: DefaultField<ColorWhen> = RawField::<ColorWhen>::new("color.ui").default();
+
+pub const PAGER: DefaultField<String> =
+    RawField::<String>::new("core.pager").default_value(|| "less".to_owned());

@@ -1,5 +1,3 @@
-use std::io::Write;
-
 use anyhow::Context as _;
 use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
@@ -7,6 +5,7 @@ use proc_exit::WithCodeResultExt;
 use crate::git2_config::Config;
 use crate::git2_config::DefaultField;
 use crate::git2_config::RawField;
+use crate::git_pager::Pager;
 
 pub fn blame(
     file_path: &std::path::Path,
@@ -95,10 +94,6 @@ pub fn blame(
         Highlighter::disabled()
     };
 
-    #[cfg(unix)]
-    pager::Pager::new().setup();
-
-    let mut stdout = std::io::stdout().lock();
     let reset = if colored_stdout {
         anstyle::Reset.render().to_string()
     } else {
@@ -124,6 +119,10 @@ pub fn blame(
         .break_words(false)
         .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
 
+    let pager = config.get(&crate::git2_config::PAGER);
+    let mut pager = Pager::stdout(&pager);
+    let mut pager = pager.start();
+    let pager = pager.as_writer()?;
     let mut prev_hunk_id = git2::Oid::zero();
     for (line_num, file_line) in file.lines().enumerate() {
         let line_num = line_num + 1;
@@ -163,7 +162,7 @@ pub fn blame(
                 "⋮".to_owned()
             };
             let _ = write!(
-                &mut stdout,
+                pager,
                 "{gutter_style}{origin:origin_width$} {line_num:>line_count_width$} {sep} {reset}{visual_line}\n{reset}"
             );
         }
