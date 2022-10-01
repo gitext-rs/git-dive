@@ -29,7 +29,7 @@ pre-release-replacements = [
 
 [dependencies]
 git2 = { version = "0.15", default-features = false, features = ["vendored-libgit2"] }
-clap = { version = "4.0.0", features = ["derive", "wrap_help"] }
+clap = { version = "4.0.7", features = ["derive", "wrap_help"] }
 clap-verbosity-flag = "2.0"
 log = "0.4"
 env_logger = { version = "0.9", default-features = false, features = ["termcolor"] }
@@ -38,10 +38,10 @@ concolor = "0.0.8"
 concolor-clap = { version = "0.0.11", features = ["api_unstable"] }
 proc-exit = "1"
 human-panic = "1"
-anyhow = "1.0.64"
+anyhow = "1.0.65"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy", "default-syntaxes", "default-themes"] }
 terminal_size = "0.2.1"
-textwrap = "0.15.0"
+textwrap = "0.15.1"
 anstyle = "0.2.2"
 content_inspector = "0.2.4"
 encoding = "0.2.33"
