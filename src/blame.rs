@@ -279,6 +279,8 @@ impl Annotations {
 
         let mut revwalk = repo.revwalk()?;
         revwalk.simplify_first_parent()?;
+        // If just walking first parents, shouldn't really need to sort
+        revwalk.set_sorting(git2::Sort::NONE)?;
         revwalk.push(rev_commit.id())?;
         for (i, id) in revwalk.enumerate() {
             let id = id?;
