@@ -4,8 +4,8 @@ use crate::git2_config::Config;
 use crate::git2_config::ReflectField;
 
 pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_exit::ExitResult {
-    let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
-    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::USAGE_ERR)?;
+    let cwd = std::env::current_dir().with_code(proc_exit::Code::FAILURE)?;
+    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::FAILURE)?;
 
     config.add_repo(&repo);
     let output = config.dump([
@@ -16,9 +16,11 @@ pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_e
 
     if output_path == std::path::Path::new("-") {
         use std::io::Write;
-        std::io::stdout().write_all(output.as_bytes())?;
+        std::io::stdout()
+            .write_all(output.as_bytes())
+            .with_code(proc_exit::Code::FAILURE)?;
     } else {
-        std::fs::write(output_path, &output)?;
+        std::fs::write(output_path, &output).with_code(proc_exit::Code::FAILURE)?;
     }
 
     Ok(())

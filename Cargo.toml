@@ -36,7 +36,7 @@ env_logger = { version = "0.9", default-features = false, features = ["termcolor
 yansi = "0.5.1"
 concolor = "0.0.9"
 concolor-clap = { version = "0.0.12", features = ["api_unstable"] }
-proc-exit = "1"
+proc-exit = "2"
 human-panic = "1"
 anyhow = "1.0.65"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy", "default-syntaxes", "default-themes"] }

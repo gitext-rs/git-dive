@@ -19,14 +19,14 @@ pub fn blame(
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
         .unwrap_or(80) as usize;
 
-    let cwd = std::env::current_dir().with_code(proc_exit::Code::USAGE_ERR)?;
-    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let cwd = std::env::current_dir().with_code(proc_exit::Code::FAILURE)?;
+    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::FAILURE)?;
     config.add_repo(&repo);
     let theme = config.get(&THEME);
 
     let rev_obj = repo
         .revparse_single(&args.rev)
-        .with_code(proc_exit::Code::CONFIG_ERR)?;
+        .with_code(proc_exit::Code::FAILURE)?;
     let rev_commit = rev_obj
         .peel_to_commit()
         .map_err(|_| {
@@ -36,7 +36,7 @@ pub fn blame(
                 rev_obj.kind().map(|k| k.str()).unwrap_or("unknown")
             )
         })
-        .with_code(proc_exit::Code::CONFIG_ERR)?;
+        .with_code(proc_exit::Code::FAILURE)?;
     let mut settings = git2::BlameOptions::new();
     settings
         .track_copies_same_file(true)
@@ -48,14 +48,14 @@ pub fn blame(
         .newest_commit(rev_commit.id());
     let blame = repo
         .blame_file(file_path, Some(&mut settings))
-        .with_code(proc_exit::Code::CONFIG_ERR)?;
+        .with_code(proc_exit::Code::FAILURE)?;
     let mut annotations = Annotations::new(&repo, &blame);
     annotations
         .relative_origin(&repo, &args.rev)
-        .with_code(proc_exit::Code::CONFIG_ERR)?;
+        .with_code(proc_exit::Code::FAILURE)?;
 
-    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::CONFIG_ERR)?;
-    let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
+    let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::FAILURE)?;
 
     let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
     let theme_set = syntect::highlighting::ThemeSet::load_defaults();
@@ -66,10 +66,11 @@ pub fn blame(
         .expect("default theme is present");
 
     let syntax = syntax_set
-        .find_syntax_for_file(file_path)?
+        .find_syntax_for_file(file_path)
+        .with_code(proc_exit::Code::FAILURE)?
         .unwrap_or_else(|| syntax_set.find_syntax_plain_text());
 
-    let file = convert_file(&file, file_path).with_code(proc_exit::Code::CONFIG_ERR)?;
+    let file = convert_file(&file, file_path).with_code(proc_exit::Code::FAILURE)?;
 
     let line_count = file.lines().count();
     let line_count_width = line_count.to_string().len(); // bytes = chars = columns with digits
@@ -122,7 +123,7 @@ pub fn blame(
     let pager = config.get(&crate::git2_config::PAGER);
     let mut pager = Pager::stdout(&pager);
     let mut pager = pager.start();
-    let pager = pager.as_writer()?;
+    let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
     let mut prev_hunk_id = git2::Oid::zero();
     for (line_num, file_line) in file.lines().enumerate() {
         let line_num = line_num + 1;
@@ -135,7 +136,7 @@ pub fn blame(
 
         let file_line = highlighter
             .highlight_line(file_line, &syntax_set)
-            .with_code(proc_exit::Code::UNKNOWN)?;
+            .with_code(proc_exit::Code::FAILURE)?;
         for (i, visual_line) in textwrap::wrap(&file_line, &wrap).into_iter().enumerate() {
             let origin = if i == 0 {
                 let hunk = blame.get_line(line_num).unwrap_or_else(|| {

@@ -3,7 +3,7 @@
 #![allow(clippy::if_same_then_else)]
 
 use clap::Parser;
-use proc_exit::WithCodeResultExt;
+use proc_exit::prelude::*;
 
 mod args;
 mod blame;
@@ -29,17 +29,7 @@ fn run() -> proc_exit::ExitResult {
     });
 
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
-    let args = match args::Args::try_parse() {
-        Ok(args) => args,
-        Err(e) if e.use_stderr() => {
-            let _ = e.print();
-            return proc_exit::Code::USAGE_ERR.ok();
-        }
-        Err(e) => {
-            let _ = e.print();
-            return proc_exit::Code::SUCCESS.ok();
-        }
-    };
+    let args = args::Args::parse();
 
     args.color.apply();
     let colored_stdout = concolor::get(concolor::Stream::Stdout).ansi_color();
@@ -54,7 +44,7 @@ fn run() -> proc_exit::ExitResult {
                 current.join(next)
             });
         log::trace!("CWD={}", current_dir.display());
-        std::env::set_current_dir(current_dir).with_code(proc_exit::Code::USAGE_ERR)?;
+        std::env::set_current_dir(current_dir).with_code(proc_exit::Code::FAILURE)?;
     }
 
     if let Some(output_path) = args.dump_config.as_deref() {
