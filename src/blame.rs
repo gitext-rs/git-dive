@@ -335,7 +335,7 @@ pub struct Highlighter<'a> {
 }
 
 impl<'a> Highlighter<'a> {
-    fn enabled(
+    pub fn enabled(
         syntax: &'a syntect::parsing::SyntaxReference,
         theme: &'a syntect::highlighting::Theme,
     ) -> Self {
@@ -343,7 +343,7 @@ impl<'a> Highlighter<'a> {
         Self { highlighter, theme }
     }
 
-    fn disabled() -> Self {
+    pub fn disabled() -> Self {
         let highlighter = None;
         static THEME: syntect::highlighting::Theme = syntect::highlighting::Theme {
             name: None,
@@ -392,7 +392,7 @@ impl<'a> Highlighter<'a> {
         self.theme
     }
 
-    fn highlight_line(
+    pub fn highlight_line(
         &mut self,
         line: &str,
         syntax_set: &syntect::parsing::SyntaxSet,

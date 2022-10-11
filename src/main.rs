@@ -52,6 +52,8 @@ fn run() -> proc_exit::ExitResult {
         config::dump_config(output_path, &mut config)?;
     } else if args.list_languages {
         list_languages(&mut config, colored_stdout)?;
+    } else if args.list_themes {
+        list_themes(&mut config, colored_stdout)?;
     } else if let Some(file_path) = args.file.as_deref() {
         blame::blame(
             file_path,
@@ -121,3 +123,45 @@ fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitR
 
     Ok(())
 }
+
+fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResult {
+    let pager = config.get(&crate::git2_config::PAGER);
+    let mut pager = Pager::stdout(&pager);
+    let mut pager = pager.start();
+    let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
+
+    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    if colored_stdout {
+        let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+        let syntax = syntax_set
+            .find_syntax_by_name("Rust")
+            .expect("always included");
+        for (name, theme) in theme_set.themes.iter() {
+            let mut highlighter = blame::Highlighter::enabled(syntax, theme);
+            let _ = writeln!(
+                pager,
+                "Theme: {}{}{}",
+                anstyle::Effects::BOLD.render(),
+                name,
+                anstyle::Reset.render()
+            );
+            let _ = writeln!(pager);
+            for line in THEME_PREVIEW_DATA.lines() {
+                let _ = writeln!(
+                    pager,
+                    "{}{}",
+                    highlighter.highlight_line(line, &syntax_set).unwrap(),
+                    anstyle::Reset.render()
+                );
+            }
+            let _ = writeln!(pager);
+        }
+    } else {
+        for name in theme_set.themes.keys() {
+            let _ = writeln!(pager, "{}", name);
+        }
+    }
+    Ok(())
+}
+
+const THEME_PREVIEW_DATA: &str = include_str!("../assets/theme_preview.rs");
