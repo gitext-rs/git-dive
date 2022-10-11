@@ -15,6 +15,10 @@ pub struct Args {
     #[arg(long, value_name = "PATH", group = "mode")]
     pub dump_config: Option<std::path::PathBuf>,
 
+    /// Display all supported languages
+    #[arg(long, group = "mode")]
+    pub list_languages: bool,
+
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///
     /// When multiple -C options are given, each subsequent

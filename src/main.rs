@@ -13,6 +13,7 @@ mod git_pager;
 mod logger;
 
 use crate::git2_config::Config;
+use crate::git_pager::Pager;
 
 fn main() {
     human_panic::setup_panic!();
@@ -49,6 +50,8 @@ fn run() -> proc_exit::ExitResult {
 
     if let Some(output_path) = args.dump_config.as_deref() {
         config::dump_config(output_path, &mut config)?;
+    } else if args.list_languages {
+        list_languages(&mut config, colored_stdout)?;
     } else if let Some(file_path) = args.file.as_deref() {
         blame::blame(
             file_path,
@@ -59,6 +62,61 @@ fn run() -> proc_exit::ExitResult {
         )?;
     } else {
         unreachable!("clap ensured a mode exists");
+    }
+
+    Ok(())
+}
+
+fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResult {
+    let total_width = terminal_size::terminal_size()
+        .map(|(w, _h)| w.0)
+        .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
+        .unwrap_or(80) as usize;
+
+    let pager = config.get(&crate::git2_config::PAGER);
+    let mut pager = Pager::stdout(&pager);
+    let mut pager = pager.start();
+    let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
+
+    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+    let name_width = syntax_set
+        .syntaxes()
+        .iter()
+        .map(|s| s.name.len())
+        .max()
+        .unwrap_or(0)
+        + 1;
+    let syntax_width = total_width - name_width;
+    let wrap = textwrap::Options::new(syntax_width)
+        .break_words(false)
+        .word_separator(textwrap::WordSeparator::AsciiSpace)
+        .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
+    for syntax in syntax_set.syntaxes() {
+        let ext = syntax.file_extensions.join(", ");
+        let ext = textwrap::wrap(&ext, &wrap);
+        for (i, ext_line) in ext.into_iter().enumerate() {
+            let mut name = if i == 0 {
+                syntax.name.clone()
+            } else {
+                "".to_owned()
+            };
+            let mut ext_line = ext_line.into_owned();
+            if colored_stdout {
+                name = format!(
+                    "{}{}{}",
+                    anstyle::Effects::BOLD.render(),
+                    name,
+                    anstyle::Reset.render()
+                );
+                ext_line = format!(
+                    "{}{}{}",
+                    anstyle::AnsiColor::Green.render_fg(),
+                    ext_line,
+                    anstyle::Reset.render()
+                );
+            }
+            let _ = writeln!(pager, "{:<width$}{}", name, ext_line, width = name_width);
+        }
     }
 
     Ok(())
