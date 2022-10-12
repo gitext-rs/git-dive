@@ -166,6 +166,8 @@ pub fn blame(
                 pager,
                 "{gutter_style}{origin:origin_width$} {line_num:>line_count_width$} {sep} {reset}{visual_line}\n{reset}"
             );
+            // HACK: Truncate until we fix our coloring of wrapped lines
+            break;
         }
     }
 
