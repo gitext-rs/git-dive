@@ -406,7 +406,7 @@ impl<'a> Highlighter<'a> {
                 ranges[0].1 = line;
             }
 
-            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], true);
+            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], false);
             Ok(escaped)
         } else {
             Ok(line.to_owned())
