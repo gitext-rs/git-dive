@@ -281,12 +281,15 @@ impl Annotations {
             )
         })?;
 
+        let (head, offset) = split_revset(head);
+
         let mut revwalk = repo.revwalk()?;
         revwalk.simplify_first_parent()?;
         // If just walking first parents, shouldn't really need to sort
         revwalk.set_sorting(git2::Sort::NONE)?;
         revwalk.push(rev_commit.id())?;
         for (i, id) in revwalk.enumerate() {
+            let i = i + offset;
             let id = id?;
             let relative = if i == 0 {
                 head.to_owned()
@@ -305,6 +308,22 @@ impl Annotations {
         }
         Ok(())
     }
+}
+
+fn split_revset(mut head: &str) -> (&str, usize) {
+    let mut offset = 0;
+    while let Some((start, end)) = head.rsplit_once('~') {
+        if end.is_empty() {
+            head = start;
+            offset += 1;
+        } else if let Ok(curr_offset) = end.parse::<usize>() {
+            head = start;
+            offset += curr_offset;
+        } else {
+            break;
+        }
+    }
+    (head, offset)
 }
 
 pub struct Annotation {
