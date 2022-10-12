@@ -137,6 +137,7 @@ pub fn blame(
         let file_line = highlighter
             .highlight_line(file_line, &syntax_set)
             .with_code(proc_exit::Code::FAILURE)?;
+        #[allow(clippy::never_loop)]
         for (i, visual_line) in textwrap::wrap(&file_line, &wrap).into_iter().enumerate() {
             let origin = if i == 0 {
                 let hunk = blame.get_line(line_num).unwrap_or_else(|| {
