@@ -44,6 +44,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a8873048100032eaa6938bf49393225c4ee80961657f45223174d02c1f5d7dc"
 
 [[package]]
+name = "anstyle-syntect"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a54d4b3ea7f3899dc1f0cfbff7f9dbceff209b799bd1e6c235f901e3c5b86efc"
+dependencies = [
+ "anstyle",
+ "syntect",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.65"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -381,6 +391,7 @@ name = "git-dive"
 version = "0.0.1"
 dependencies = [
  "anstyle",
+ "anstyle-syntect",
  "anyhow",
  "atty",
  "clap",

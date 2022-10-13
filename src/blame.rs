@@ -100,22 +100,11 @@ pub fn blame(
     } else {
         "".to_owned()
     };
-    let gutter_style = anstyle::Style::new()
-        .fg_color(
-            highlighter
-                .theme()
-                .settings
-                .gutter_foreground
-                .map(|c| (c.r, c.g, c.b).into()),
-        )
-        .bg_color(
-            highlighter
-                .theme()
-                .settings
-                .gutter
-                .map(|c| (c.r, c.g, c.b).into()),
-        );
-    let gutter_style = gutter_style.render();
+    let gutter_style = if colored_stdout {
+        gutter_style(highlighter.theme()).render().to_string()
+    } else {
+        "".to_owned()
+    };
     let wrap = textwrap::Options::new(code_width)
         .break_words(false)
         .wrap_algorithm(textwrap::WrapAlgorithm::FirstFit);
@@ -434,6 +423,19 @@ impl<'a> Highlighter<'a> {
             Ok(line.to_owned())
         }
     }
+}
+
+fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
+    const DEFAULT_GUTTER_COLOR: u8 = 238;
+
+    // If the theme provides a gutter foreground color, use it.
+    let fg_color = theme
+        .settings
+        .gutter_foreground
+        .map(anstyle_syntect::to_anstyle_color)
+        .unwrap_or_else(|| anstyle::XTermColor(DEFAULT_GUTTER_COLOR).into());
+
+    fg_color.into()
 }
 
 const THEME_DEFAULT: &str = "base16-ocean.dark";
