@@ -6,6 +6,7 @@ use clap::Parser;
 use proc_exit::prelude::*;
 
 mod args;
+mod assets;
 mod blame;
 mod config;
 mod git2_config;
@@ -80,7 +81,7 @@ fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitR
     let mut pager = pager.start();
     let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
 
-    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+    let syntax_set = assets::load_syntaxes();
     let name_width = syntax_set
         .syntaxes()
         .iter()
@@ -130,9 +131,9 @@ fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResu
     let mut pager = pager.start();
     let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
 
-    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    let theme_set = assets::load_themes();
     if colored_stdout {
-        let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
+        let syntax_set = assets::load_syntaxes();
         let syntax = syntax_set
             .find_syntax_by_name("Rust")
             .expect("always included");

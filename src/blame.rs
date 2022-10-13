@@ -57,8 +57,8 @@ pub fn blame(
     let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::FAILURE)?;
 
-    let syntax_set = syntect::parsing::SyntaxSet::load_defaults_newlines();
-    let theme_set = syntect::highlighting::ThemeSet::load_defaults();
+    let syntax_set = crate::assets::load_syntaxes();
+    let theme_set = crate::assets::load_themes();
     let theme = theme_set
         .themes
         .get(&theme)
