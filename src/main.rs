@@ -58,6 +58,32 @@ fn run() -> proc_exit::ExitResult {
     } else if args.acknowledgements {
         use std::io::Write;
         let _ = writeln!(std::io::stdout(), "{}", assets::get_acknowledgements());
+    } else if args.diagnostic {
+        use bugreport::{bugreport, collector::*, format::Markdown};
+
+        let mut report = bugreport!()
+            .info(SoftwareVersion::default())
+            .info(OperatingSystem::default())
+            .info(CommandLine::default())
+            .info(EnvironmentVariables::list(&[
+                "SHELL",
+                "PAGER",
+                "LESS",
+                "LESSCHARSET",
+                "LANG",
+                "LC_ALL",
+                "GIT_PAGER",
+                // Skipping `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_*` and `GIT_CONFIG_VALUE_*`
+                "GIT_CONFIG_PARAMETERS",
+                "COLORTERM",
+                "TERM",
+                "NO_COLOR",
+                "CLICOLOR",
+                "CLICOLOR_FORCE",
+            ]))
+            .info(CompileTimeInformation::default());
+
+        report.print::<Markdown>();
     } else if let Some(file_path) = args.file.as_deref() {
         blame::blame(
             file_path,

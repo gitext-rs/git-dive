@@ -27,6 +27,10 @@ pub struct Args {
     #[arg(long, hide_short_help = true, group = "mode")]
     pub acknowledgements: bool,
 
+    /// Display information for bug reports.
+    #[arg(long, hide_short_help = true, group = "mode")]
+    pub diagnostic: bool,
+
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///
     /// When multiple -C options are given, each subsequent
