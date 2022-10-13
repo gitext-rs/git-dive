@@ -432,7 +432,7 @@ fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
     let fg_color = theme
         .settings
         .gutter_foreground
-        .map(anstyle_syntect::to_anstyle_color)
+        .map(crate::assets::to_anstyle_color)
         .unwrap_or_else(|| anstyle::XTermColor(DEFAULT_GUTTER_COLOR).into());
 
     fg_color.into()
