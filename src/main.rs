@@ -55,6 +55,9 @@ fn run() -> proc_exit::ExitResult {
         list_languages(&mut config, colored_stdout)?;
     } else if args.list_themes {
         list_themes(&mut config, colored_stdout)?;
+    } else if args.acknowledgements {
+        use std::io::Write;
+        let _ = writeln!(std::io::stdout(), "{}", assets::get_acknowledgements());
     } else if let Some(file_path) = args.file.as_deref() {
         blame::blame(
             file_path,
@@ -137,7 +140,8 @@ fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResu
         let syntax = syntax_set
             .find_syntax_by_name("Rust")
             .expect("always included");
-        for (name, theme) in theme_set.themes.iter() {
+        for name in theme_set.themes() {
+            let theme = theme_set.get(name).unwrap();
             let mut highlighter = blame::Highlighter::enabled(syntax, theme);
             let _ = writeln!(
                 pager,
@@ -158,7 +162,7 @@ fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResu
             let _ = writeln!(pager);
         }
     } else {
-        for name in theme_set.themes.keys() {
+        for name in theme_set.themes() {
             let _ = writeln!(pager, "{}", name);
         }
     }

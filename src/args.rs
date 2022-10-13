@@ -23,6 +23,10 @@ pub struct Args {
     #[arg(long, group = "mode")]
     pub list_themes: bool,
 
+    /// Display acknowledgements
+    #[arg(long, hide_short_help = true, group = "mode")]
+    pub acknowledgements: bool,
+
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///
     /// When multiple -C options are given, each subsequent

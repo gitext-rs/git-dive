@@ -394,6 +394,7 @@ dependencies = [
  "anstyle-syntect",
  "anyhow",
  "atty",
+ "bincode",
  "clap",
  "clap-verbosity-flag",
  "concolor",
@@ -401,11 +402,14 @@ dependencies = [
  "content_inspector",
  "encoding",
  "env_logger",
+ "flate2",
  "git-config-env",
  "git2",
  "human-panic",
  "log",
+ "once_cell",
  "proc-exit",
+ "serde",
  "shlex",
  "syntect",
  "terminal_size",
@@ -734,6 +738,9 @@ name = "serde"
 version = "1.0.145"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "728eb6351430bccb993660dfffc5a72f91ccc1295abaa8ce19b27ebe4f75568b"
+dependencies = [
+ "serde_derive",
+]
 
 [[package]]
 name = "serde_derive"

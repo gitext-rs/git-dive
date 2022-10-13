@@ -60,9 +60,8 @@ pub fn blame(
     let syntax_set = crate::assets::load_syntaxes();
     let theme_set = crate::assets::load_themes();
     let theme = theme_set
-        .themes
         .get(&theme)
-        .or_else(|| theme_set.themes.get(THEME_DEFAULT))
+        .or_else(|| theme_set.get(THEME_DEFAULT))
         .expect("default theme is present");
 
     let syntax = syntax_set
@@ -433,11 +432,11 @@ fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
         .settings
         .gutter_foreground
         .map(crate::assets::to_anstyle_color)
-        .unwrap_or_else(|| anstyle::XTermColor(DEFAULT_GUTTER_COLOR).into());
+        .unwrap_or_else(|| Some(anstyle::XTermColor(DEFAULT_GUTTER_COLOR).into()));
 
-    fg_color.into()
+    anstyle::Style::new().fg_color(fg_color)
 }
 
-const THEME_DEFAULT: &str = "base16-ocean.dark";
+const THEME_DEFAULT: &str = "Monokai Extended";
 pub const THEME: DefaultField<String> =
     RawField::<String>::new("dive.theme").default_value(|| THEME_DEFAULT.to_owned());
