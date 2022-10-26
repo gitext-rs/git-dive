@@ -1,5 +1,5 @@
-const DEFAULT_ENV: &[(&str, &str)] = &[("LESS", "FRX")];
-const REQUIRED_ENV: &[(&str, &str)] = &[("LV", "-c"), ("LESSCHARSET", "UTF-8")];
+const DEFAULT_ENV: &[(&str, &str)] = &[("LESS", "FRX"), ("LV", "-c")];
+const REQUIRED_ENV: &[(&str, &str)] = &[("LESSCHARSET", "UTF-8")];
 
 pub struct Pager {
     cmd: Option<std::process::Command>,
