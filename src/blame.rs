@@ -416,12 +416,49 @@ impl<'a> Highlighter<'a> {
                 ranges[0].1 = line;
             }
 
-            let escaped = syntect::util::as_24_bit_terminal_escaped(&ranges[..], false);
+            let mut escaped = String::new();
+            for (style, region) in ranges {
+                use std::fmt::Write;
+                let style = body_style(style);
+                let _ = write!(
+                    &mut escaped,
+                    "{}{}{}",
+                    style.render(),
+                    region,
+                    anstyle::Reset.render()
+                );
+            }
             Ok(escaped)
         } else {
             Ok(line.to_owned())
         }
     }
+}
+
+fn body_style(style: syntect::highlighting::Style) -> anstyle::Style {
+    let fg_color = crate::assets::to_anstyle_color(style.foreground);
+    // intentionally not setting bg_color
+    let effects = anstyle::Effects::new()
+        .set(
+            anstyle::Effects::BOLD,
+            style
+                .font_style
+                .contains(syntect::highlighting::FontStyle::BOLD),
+        )
+        .set(
+            anstyle::Effects::UNDERLINE,
+            style
+                .font_style
+                .contains(syntect::highlighting::FontStyle::UNDERLINE),
+        )
+        .set(
+            anstyle::Effects::ITALIC,
+            style
+                .font_style
+                .contains(syntect::highlighting::FontStyle::ITALIC),
+        );
+    let output = anstyle::Style::new().fg_color(fg_color).effects(effects);
+    output
 }
 
 fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
