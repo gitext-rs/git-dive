@@ -1,4 +1,5 @@
-const DEFAULT_ENV: &[(&str, &str)] = &[("LESS", "FRX"), ("LV", "-c"), ("LESSCHARSET", "UTF-8")];
+const DEFAULT_ENV: &[(&str, &str)] = &[("LESS", "FRX")];
+const REQUIRED_ENV: &[(&str, &str)] = &[("LV", "-c"), ("LESSCHARSET", "UTF-8")];
 
 pub struct Pager {
     cmd: Option<std::process::Command>,
@@ -85,6 +86,12 @@ fn parse(args: &str) -> Option<std::process::Command> {
     let mut cmd = std::process::Command::new(cmd);
     cmd.stdin(std::process::Stdio::piped());
     cmd.args(args);
-    cmd.envs(DEFAULT_ENV.iter().copied());
+    cmd.envs(REQUIRED_ENV.iter().copied());
+    cmd.envs(
+        DEFAULT_ENV
+            .iter()
+            .copied()
+            .filter(|(k, _)| std::env::var_os(k).is_none()),
+    );
     Some(cmd)
 }
