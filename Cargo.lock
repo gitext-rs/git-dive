@@ -39,9 +39,9 @@ dependencies = [
 
 [[package]]
 name = "anstyle"
-version = "0.2.2"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a8873048100032eaa6938bf49393225c4ee80961657f45223174d02c1f5d7dc"
+checksum = "a14a192897f8e90c08a67fd5d079b30a882b00ab7e4bff6ddaacb2a021f36b17"
 
 [[package]]
 name = "anstyle-syntect"
