@@ -41,7 +41,7 @@ human-panic = "1"
 anyhow = "1.0.65"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy"] }
 terminal_size = "0.2.1"
-textwrap = "0.15.1"
+textwrap = "0.16.0"
 anstyle = "0.2.2"
 content_inspector = "0.2.4"
 encoding = "0.2.33"
