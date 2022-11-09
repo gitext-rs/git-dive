@@ -42,7 +42,7 @@ anyhow = "1.0.66"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy"] }
 terminal_size = "0.2.1"
 textwrap = "0.16.0"
-anstyle = "0.2.4"
+anstyle = "0.2.5"
 content_inspector = "0.2.4"
 encoding = "0.2.33"
 git-config-env = "0.1.2"
