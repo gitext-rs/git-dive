@@ -32,7 +32,7 @@ git2 = { version = "0.15", default-features = false, features = ["vendored-libgi
 clap = { version = "4.0.18", features = ["derive", "wrap_help"] }
 clap-verbosity-flag = "2.0"
 log = "0.4"
-env_logger = { version = "0.9", default-features = false, features = ["termcolor"] }
+env_logger = { version = "0.10", default-features = false, features = ["termcolor"] }
 yansi = "0.5.1"
 concolor = "0.0.9"
 concolor-clap = { version = "0.0.12", features = ["api_unstable"] }
