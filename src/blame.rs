@@ -24,6 +24,8 @@ pub fn blame(
     config.add_repo(&repo);
     let theme = config.get(&THEME);
 
+    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
+
     let rev_obj = repo
         .revparse_single(&args.rev)
         .with_code(proc_exit::Code::FAILURE)?;
@@ -47,14 +49,13 @@ pub fn blame(
         .ignore_whitespace(true)
         .newest_commit(rev_commit.id());
     let blame = repo
-        .blame_file(file_path, Some(&mut settings))
+        .blame_file(&rel_path, Some(&mut settings))
         .with_code(proc_exit::Code::FAILURE)?;
     let mut annotations = Annotations::new(&repo, &blame);
     annotations
         .relative_origin(&repo, &args.rev)
         .with_code(proc_exit::Code::FAILURE)?;
 
-    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
     let file = read_file(&repo, &args.rev, &rel_path).with_code(proc_exit::Code::FAILURE)?;
 
     let syntax_set = crate::assets::load_syntaxes();
