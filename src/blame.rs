@@ -174,7 +174,7 @@ fn to_repo_relative(
     let abs_path = path
         .canonicalize()
         .with_context(|| anyhow::format_err!("Could not read {}", path.display()))?;
-    let rel_path = abs_path.strip_prefix(&workdir).map_err(|_| {
+    let rel_path = abs_path.strip_prefix(workdir).map_err(|_| {
         anyhow::format_err!(
             "File {} is not in the repository's workdir {}",
             abs_path.display(),
@@ -184,8 +184,8 @@ fn to_repo_relative(
     Ok(rel_path.to_owned())
 }
 
-fn read_file<'r>(
-    repo: &'r git2::Repository,
+fn read_file(
+    repo: &git2::Repository,
     rev: &str,
     rel_path: &std::path::Path,
 ) -> anyhow::Result<Vec<u8>> {
@@ -325,7 +325,7 @@ impl Annotation {
         let obj = repo.find_object(id, None).expect("blame has valid ids");
         let short = obj
             .short_id()
-            .unwrap_or_else(|e| panic!("unknown failure for short_id for {}: {}", id, e))
+            .unwrap_or_else(|e| panic!("unknown failure for short_id for {id}: {e}"))
             .as_str()
             .expect("short_id is always valid UTF-8")
             .to_owned();

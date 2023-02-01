@@ -147,7 +147,7 @@ fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitR
                     anstyle::Reset.render()
                 );
             }
-            let _ = writeln!(pager, "{:<width$}{}", name, ext_line, width = name_width);
+            let _ = writeln!(pager, "{name:<name_width$}{ext_line}");
         }
     }
 
@@ -189,7 +189,7 @@ fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResu
         }
     } else {
         for name in theme_set.themes() {
-            let _ = writeln!(pager, "{}", name);
+            let _ = writeln!(pager, "{name}");
         }
     }
     Ok(())

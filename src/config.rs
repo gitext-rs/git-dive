@@ -5,7 +5,7 @@ use crate::git2_config::ReflectField;
 
 pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_exit::ExitResult {
     let cwd = std::env::current_dir().with_code(proc_exit::Code::FAILURE)?;
-    let repo = git2::Repository::discover(&cwd).with_code(proc_exit::Code::FAILURE)?;
+    let repo = git2::Repository::discover(cwd).with_code(proc_exit::Code::FAILURE)?;
 
     config.add_repo(&repo);
     let output = config.dump([

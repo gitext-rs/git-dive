@@ -55,12 +55,12 @@ impl Config {
                 .split_once('.')
                 .unwrap_or_else(|| panic!("field `{}` is missing a section", field.name()));
             if section != prior_section {
-                let _ = writeln!(&mut output, "[{}]", section);
+                let _ = writeln!(&mut output, "[{section}]");
                 prior_section = section;
             }
             let value = field.dump(self);
             let source = field.get_source(self);
-            let _ = writeln!(&mut output, "\t{} = {}  # {}", name, value, source);
+            let _ = writeln!(&mut output, "\t{name} = {value}  # {source}");
         }
 
         output
