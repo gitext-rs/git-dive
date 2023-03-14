@@ -12,6 +12,7 @@ edition = "2021"
 rust-version = "1.64.0"  # MSRV
 include = [
   "src/**/*",
+  "assets/**/*",
   "Cargo.toml",
   "LICENSE*",
   "README.md",
