@@ -11,9 +11,9 @@ pub fn blame(
     file_path: &std::path::Path,
     config: &mut Config,
     args: &crate::args::Args,
-    colored_stdout: bool,
-    _colored_stderr: bool,
 ) -> proc_exit::ExitResult {
+    let colored_stdout = anstyle_stream::AutoStream::choice(&std::io::stdout())
+        != anstyle_stream::ColorChoice::Never;
     let total_width = terminal_size::terminal_size()
         .map(|(w, _h)| w.0)
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
@@ -470,7 +470,7 @@ fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
         .settings
         .gutter_foreground
         .map(crate::assets::to_anstyle_color)
-        .unwrap_or_else(|| Some(anstyle::XTermColor(DEFAULT_GUTTER_COLOR).into()));
+        .unwrap_or_else(|| Some(anstyle::Ansi256Color(DEFAULT_GUTTER_COLOR).into()));
 
     anstyle::Style::new().fg_color(fg_color)
 }

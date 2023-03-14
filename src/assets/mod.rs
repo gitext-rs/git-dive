@@ -40,7 +40,7 @@ pub fn to_anstyle_color(color: syntect::highlighting::Color) -> Option<anstyle::
             // TODO: When ansi_term adds support for bright variants using codes
             // 90-97 (foreground) and 100-107 (background), we should use those
             // for values 0x08 to 0x0f and only use Fixed for 0x10 to 0xff.
-            n => anstyle::XTermColor(n).into(),
+            n => anstyle::Ansi256Color(n).into(),
         })
     } else if color.a == 1 {
         // Themes can specify the terminal's default foreground/background color
