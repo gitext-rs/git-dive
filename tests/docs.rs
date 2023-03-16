@@ -7,7 +7,7 @@ fn screenshot() {
     let scratchpad_path = scratchpad.path().unwrap();
     let status = std::process::Command::new("git")
         .arg("clone")
-        .arg(std::env::current_dir().unwrap())
+        .arg("https://github.com/gitext-rs/git-dive.git")
         .current_dir(scratchpad_path)
         .status()
         .unwrap();
