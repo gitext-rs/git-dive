@@ -34,7 +34,6 @@ fn run() -> proc_exit::ExitResult {
     let args = args::Args::parse();
 
     args.color.apply();
-    let colored_stdout = concolor::get(concolor::Stream::Stdout).ansi_color();
     let colored_stderr = concolor::get(concolor::Stream::Stderr).ansi_color();
 
     logger::init_logging(args.verbose.clone(), colored_stderr);
@@ -52,12 +51,16 @@ fn run() -> proc_exit::ExitResult {
     if let Some(output_path) = args.dump_config.as_deref() {
         config::dump_config(output_path, &mut config)?;
     } else if args.list_languages {
-        list_languages(&mut config, colored_stdout)?;
+        list_languages(&mut config)?;
     } else if args.list_themes {
-        list_themes(&mut config, colored_stdout)?;
+        list_themes(&mut config)?;
     } else if args.acknowledgements {
         use std::io::Write;
-        let _ = writeln!(std::io::stdout(), "{}", assets::get_acknowledgements());
+        let _ = writeln!(
+            anstyle_stream::stdout(),
+            "{}",
+            assets::get_acknowledgements()
+        );
     } else if args.diagnostic {
         use bugreport::{bugreport, collector::*, format::Markdown};
 
@@ -85,13 +88,7 @@ fn run() -> proc_exit::ExitResult {
 
         report.print::<Markdown>();
     } else if let Some(file_path) = args.file.as_deref() {
-        blame::blame(
-            file_path,
-            &mut config,
-            &args,
-            colored_stdout,
-            colored_stderr,
-        )?;
+        blame::blame(file_path, &mut config, &args)?;
     } else {
         unreachable!("clap ensured a mode exists");
     }
@@ -99,7 +96,7 @@ fn run() -> proc_exit::ExitResult {
     Ok(())
 }
 
-fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResult {
+fn list_languages(config: &mut Config) -> proc_exit::ExitResult {
     let total_width = terminal_size::terminal_size()
         .map(|(w, _h)| w.0)
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
@@ -133,20 +130,18 @@ fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitR
                 "".to_owned()
             };
             let mut ext_line = ext_line.into_owned();
-            if colored_stdout {
-                name = format!(
-                    "{}{}{}",
-                    anstyle::Effects::BOLD.render(),
-                    name,
-                    anstyle::Reset.render()
-                );
-                ext_line = format!(
-                    "{}{}{}",
-                    anstyle::AnsiColor::Green.render_fg(),
-                    ext_line,
-                    anstyle::Reset.render()
-                );
-            }
+            name = format!(
+                "{}{}{}",
+                anstyle::Effects::BOLD.render(),
+                name,
+                anstyle::Reset.render()
+            );
+            ext_line = format!(
+                "{}{}{}",
+                anstyle::AnsiColor::Green.render_fg(),
+                ext_line,
+                anstyle::Reset.render()
+            );
             let _ = writeln!(pager, "{name:<name_width$}{ext_line}");
         }
     }
@@ -154,7 +149,9 @@ fn list_languages(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitR
     Ok(())
 }
 
-fn list_themes(config: &mut Config, colored_stdout: bool) -> proc_exit::ExitResult {
+fn list_themes(config: &mut Config) -> proc_exit::ExitResult {
+    let colored_stdout = anstyle_stream::AutoStream::choice(&std::io::stdout())
+        != anstyle_stream::ColorChoice::Never;
     let pager = config.get(&crate::git2_config::PAGER);
     let mut pager = Pager::stdout(&pager);
     let mut pager = pager.start();
