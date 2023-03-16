@@ -171,8 +171,7 @@ fn to_repo_relative(
     let workdir = repo.workdir().ok_or_else(|| {
         anyhow::format_err!("No workdir found; Bare repositories are not supported")
     })?;
-    let abs_path = path
-        .canonicalize()
+    let abs_path = dunce::canonicalize(path)
         .with_context(|| anyhow::format_err!("Could not read {}", path.display()))?;
     let rel_path = abs_path.strip_prefix(workdir).map_err(|_| {
         anyhow::format_err!(
