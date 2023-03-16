@@ -29,7 +29,7 @@ pre-release-replacements = [
 ]
 
 [dependencies]
-git2 = { version = "0.15.0", default-features = false, features = ["vendored-libgit2"] }
+git2 = { version = "0.15.0", default-features = false }
 clap = { version = "4.1.8", features = ["derive", "wrap_help"] }
 clap-verbosity-flag = "2.0.0"
 log = "0.4.17"
@@ -59,3 +59,7 @@ bugreport = "0.5.0"
 [dev-dependencies]
 snapbox = { version = "0.4.9", features = ["path"] }
 term-transcript = "0.2.0"
+
+[features]
+default = ["vendored-libgit2"]
+vendored-libgit2 = ["git2/vendored-libgit2"]
