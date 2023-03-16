@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 <!-- next-header -->
 ## [Unreleased] - ReleaseDate
 
+### Fixes
+
+- Correctly find repo-relative path on Windows
+
 ## [0.1.3] - 2023-03-16
 
 ### Fixes
