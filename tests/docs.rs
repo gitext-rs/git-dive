@@ -30,7 +30,9 @@ fn screenshot() {
         ShellOptions::<term_transcript::StdShell>::sh()
             .with_alias("git-dive", &cmd_path.to_string_lossy())
             .with_current_dir(&repo_path)
-            .with_env("CLICOLOR_FORCE", "1"),
+            .with_env("CLICOLOR_FORCE", "1")
+            // Make it independent of the tester's user config
+            .with_env("GIT_CONFIG_PARAMETERS", "'dive.theme'='Monokai Extended'"),
     )
     .test("assets/screenshot.svg", [cmd]);
 
