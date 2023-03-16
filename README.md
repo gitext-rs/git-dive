@@ -40,6 +40,7 @@ Features
 
 Planned Features
 - [Interactive pager that let's you browse through time](https://github.com/epage/git-dive/issues?q=is%3Aopen+is%3Aissue+milestone%3A%220.2+-+Interactive+Pager%22)
+- [Reverse blame](https://github.com/gitext-rs/git-dive/issues/21)
 
 `git-dive` was inspired by [perforce time lapse
 view](https://www.perforce.com/video-tutorials/vcs/using-time-lapse-view).
