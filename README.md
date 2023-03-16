@@ -2,6 +2,8 @@
 
 > **Dive into a file's history to find root cause**
 
+![Screenshot](./assets/screenshot.svg)
+
 [![codecov](https://codecov.io/gh/gitext-rs/git-dive/branch/master/graph/badge.svg)](https://codecov.io/gh/gitext-rs/git-dive)
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)][Documentation]
 ![License](https://img.shields.io/crates/l/git-dive.svg)
