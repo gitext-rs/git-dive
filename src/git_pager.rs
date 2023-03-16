@@ -7,7 +7,7 @@ pub struct Pager {
 
 impl Pager {
     pub fn stdout(args: &str) -> Self {
-        let cmd = anstyle_stream::stdout()
+        let cmd = anstream::stdout()
             .is_terminal()
             .then(|| parse(args))
             .flatten();
@@ -15,13 +15,13 @@ impl Pager {
     }
 
     pub fn start(&mut self) -> ActivePager {
-        let stdout = anstyle_stream::stdout().lock();
+        let stdout = anstream::stdout().lock();
         if let Some(cmd) = &mut self.cmd {
             // should use pager instead of stderr
             if let Ok(p) = cmd.spawn() {
-                let stderr = anstyle_stream::stderr()
+                let stderr = anstream::stderr()
                     .is_terminal()
-                    .then(|| anstyle_stream::stderr().lock());
+                    .then(|| anstream::stderr().lock());
                 ActivePager {
                     primary: stdout,
                     _secondary: stderr,
@@ -45,8 +45,8 @@ impl Pager {
 }
 
 pub struct ActivePager {
-    primary: anstyle_stream::AutoStream<std::io::StdoutLock<'static>>,
-    _secondary: Option<anstyle_stream::AutoStream<std::io::StderrLock<'static>>>,
+    primary: anstream::AutoStream<std::io::StdoutLock<'static>>,
+    _secondary: Option<anstream::AutoStream<std::io::StderrLock<'static>>>,
     pager: Option<std::process::Child>,
 }
 

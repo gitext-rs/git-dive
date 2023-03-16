@@ -56,11 +56,7 @@ fn run() -> proc_exit::ExitResult {
         list_themes(&mut config)?;
     } else if args.acknowledgements {
         use std::io::Write;
-        let _ = writeln!(
-            anstyle_stream::stdout(),
-            "{}",
-            assets::get_acknowledgements()
-        );
+        let _ = writeln!(anstream::stdout(), "{}", assets::get_acknowledgements());
     } else if args.diagnostic {
         use bugreport::{bugreport, collector::*, format::Markdown};
 
@@ -150,8 +146,8 @@ fn list_languages(config: &mut Config) -> proc_exit::ExitResult {
 }
 
 fn list_themes(config: &mut Config) -> proc_exit::ExitResult {
-    let colored_stdout = anstyle_stream::AutoStream::choice(&std::io::stdout())
-        != anstyle_stream::ColorChoice::Never;
+    let colored_stdout =
+        anstream::AutoStream::choice(&std::io::stdout()) != anstream::ColorChoice::Never;
     let pager = config.get(&crate::git2_config::PAGER);
     let mut pager = Pager::stdout(&pager);
     let mut pager = pager.start();

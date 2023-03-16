@@ -16,7 +16,7 @@ pub fn dump_config(output_path: &std::path::Path, config: &mut Config) -> proc_e
 
     if output_path == std::path::Path::new("-") {
         use std::io::Write;
-        anstyle_stream::stdout()
+        anstream::stdout()
             .write_all(output.as_bytes())
             .with_code(proc_exit::Code::FAILURE)?;
     } else {

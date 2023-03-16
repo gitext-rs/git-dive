@@ -12,8 +12,8 @@ pub fn blame(
     config: &mut Config,
     args: &crate::args::Args,
 ) -> proc_exit::ExitResult {
-    let colored_stdout = anstyle_stream::AutoStream::choice(&std::io::stdout())
-        != anstyle_stream::ColorChoice::Never;
+    let colored_stdout =
+        anstream::AutoStream::choice(&std::io::stdout()) != anstream::ColorChoice::Never;
     let total_width = terminal_size::terminal_size()
         .map(|(w, _h)| w.0)
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
