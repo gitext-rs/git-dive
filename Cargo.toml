@@ -58,6 +58,7 @@ bugreport = "0.5.0"
 dunce = "1.0.3"
 
 [dev-dependencies]
+git-fixture = "0.3.1"
 snapbox = { version = "0.4.10", features = ["path"] }
 term-transcript = "0.2.0"
 
