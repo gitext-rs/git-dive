@@ -61,15 +61,9 @@ fn js_highlight_panics() {
         .current_dir(root_path)
         .env("CLICOLOR_FORCE", "1")
         .assert()
-        .failure()
-        .stdout_eq(
-            "\
-",
-        )
+        .success()
         .stderr_matches(
             "\
-thread 'main' panicked at 'regex string should be pre-tested: [..]
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ",
         );
 
