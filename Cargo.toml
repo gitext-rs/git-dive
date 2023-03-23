@@ -39,7 +39,7 @@ concolor-clap = { version = "0.1.0", features = ["api"] }
 proc-exit = "2.0.1"
 human-panic = "1.1.3"
 anyhow = "1.0.68"
-syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-fancy"] }
+syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-onig"] }
 terminal_size = "0.2.3"
 textwrap = "0.16.0"
 anstyle = "0.3.1"
@@ -58,6 +58,7 @@ bugreport = "0.5.0"
 dunce = "1.0.3"
 
 [dev-dependencies]
+git-fixture = "0.3.1"
 snapbox = { version = "0.4.10", features = ["path"] }
 term-transcript = "0.2.0"
 
