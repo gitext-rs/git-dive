@@ -223,21 +223,27 @@ fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String>
             String::from_utf8_lossy(buffer).into_owned()
         },
         content_inspector::ContentType::UTF_16LE => {
-            let mut decoded = String::new();
-            let (r, _) = encoding_rs::UTF_16LE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
-            match r {
-                encoding_rs::DecoderResult::InputEmpty => {},
-                _ => anyhow::bail!("Could not decode UTF-16 in {}", path.display()),
-            }
+            // Despite accepting a `String`, decode_to_string_without_replacement` doesn't allocate
+            // so to avoid `OutputFull` loops, we're going to assume any UTF-16 content can fit in
+            // a buffer twice its size
+            let mut decoded = String::with_capacity(buffer.len() * 2);
+            let (r, written) = encoding_rs::UTF_16LE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
+            let decoded = match r {
+                encoding_rs::DecoderResult::InputEmpty => decoded,
+                _ => anyhow::bail!("invalid UTF-16LE encoding at byte {} in {}", written, path.display()),
+            };
             decoded
         }
         content_inspector::ContentType::UTF_16BE => {
-            let mut decoded = String::new();
-            let (r, _) = encoding_rs::UTF_16BE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
-            match r {
-                encoding_rs::DecoderResult::InputEmpty => {},
-                _ => anyhow::bail!("Could not decode UTF-16 in {}", path.display()),
-            }
+            // Despite accepting a `String`, decode_to_string_without_replacement` doesn't allocate
+            // so to avoid `OutputFull` loops, we're going to assume any UTF-16 content can fit in
+            // a buffer twice its size
+            let mut decoded = String::with_capacity(buffer.len() * 2);
+            let (r, written) = encoding_rs::UTF_16BE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
+            let decoded = match r {
+                encoding_rs::DecoderResult::InputEmpty => decoded,
+                _ => anyhow::bail!("invalid UTF-16BE encoding at byte {} in {}", written, path.display()),
+            };
             decoded
         },
     };
