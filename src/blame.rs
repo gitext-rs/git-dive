@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use encoding::Encoding as _;
 use proc_exit::WithCodeResultExt;
 
 use crate::git2_config::Config;
@@ -224,14 +223,22 @@ fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String>
             String::from_utf8_lossy(buffer).into_owned()
         },
         content_inspector::ContentType::UTF_16LE => {
-            let buffer = encoding::all::UTF_16LE.decode(buffer, encoding::DecoderTrap::Replace)
-                .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
-            buffer
+            let mut decoded = String::new();
+            let (r, _) = encoding_rs::UTF_16LE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
+            match r {
+                encoding_rs::DecoderResult::InputEmpty => {},
+                _ => anyhow::bail!("Could not decode UTF-16 in {}", path.display()),
+            }
+            decoded
         }
         content_inspector::ContentType::UTF_16BE => {
-            let buffer = encoding::all::UTF_16BE.decode(buffer, encoding::DecoderTrap::Replace)
-                .map_err(|_| anyhow::format_err!("Could not decode UTF-16 in {}", path.display()))?;
-            buffer
+            let mut decoded = String::new();
+            let (r, _) = encoding_rs::UTF_16BE.new_decoder_with_bom_removal().decode_to_string_without_replacement(buffer, &mut decoded, true);
+            match r {
+                encoding_rs::DecoderResult::InputEmpty => {},
+                _ => anyhow::bail!("Could not decode UTF-16 in {}", path.display()),
+            }
+            decoded
         },
     };
 
