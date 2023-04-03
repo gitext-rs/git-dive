@@ -29,7 +29,7 @@ pre-release-replacements = [
 ]
 
 [dependencies]
-git2 = { version = "0.15.0", default-features = false }
+git2 = { version = "0.17.0", default-features = false }
 clap = { version = "4.1.8", features = ["derive", "wrap_help"] }
 clap-verbosity-flag = "2.0.0"
 log = "0.4.17"
