@@ -24,17 +24,21 @@ fn main() {
 
 fn run() -> proc_exit::ExitResult {
     let mut config = Config::system();
-    concolor::set(match config.get(&crate::git2_config::COLOR_UI) {
-        crate::git2_config::ColorWhen::Always => concolor::ColorChoice::Always,
-        crate::git2_config::ColorWhen::Auto => concolor::ColorChoice::Auto,
-        crate::git2_config::ColorWhen::Never => concolor::ColorChoice::Never,
-    });
+    match config.get(&crate::git2_config::COLOR_UI) {
+        crate::git2_config::ColorWhen::Always => anstream::ColorChoice::Always,
+        crate::git2_config::ColorWhen::Auto => anstream::ColorChoice::Auto,
+        crate::git2_config::ColorWhen::Never => anstream::ColorChoice::Never,
+    }
+    .write_global();
 
     // clap's `get_matches` uses Failure rather than Usage, so bypass it for `get_matches_safe`.
     let args = args::Args::parse();
 
-    args.color.apply();
-    let colored_stderr = concolor::get(concolor::Stream::Stderr).ansi_color();
+    args.color.write_global();
+    let colored_stderr = !matches!(
+        anstream::AutoStream::choice(&std::io::stderr()),
+        anstream::ColorChoice::Never
+    );
 
     logger::init_logging(args.verbose.clone(), colored_stderr);
 
