@@ -1,9 +1,6 @@
 #[derive(clap::Parser)]
 #[command(about, author, version)]
-#[command(
-        color = concolor_clap::color_choice(),
-        allow_missing_positional = true,
-    )]
+#[command(allow_missing_positional = true)]
 #[command(group = clap::ArgGroup::new("mode").multiple(false).required(true))]
 pub struct Args {
     #[arg(default_value = "HEAD")]
@@ -46,7 +43,7 @@ pub struct Args {
     pub current_dir: Option<Vec<std::path::PathBuf>>,
 
     #[command(flatten)]
-    pub(crate) color: concolor_clap::Color,
+    pub(crate) color: colorchoice_clap::Color,
 
     #[command(flatten)]
     pub verbose: clap_verbosity_flag::Verbosity<clap_verbosity_flag::InfoLevel>,
