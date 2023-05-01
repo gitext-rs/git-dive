@@ -29,36 +29,36 @@ pre-release-replacements = [
 ]
 
 [dependencies]
-git2 = { version = "0.17.0", default-features = false }
-clap = { version = "4.2.1", features = ["derive", "wrap_help"] }
+git2 = { version = "0.17.1", default-features = false }
+clap = { version = "4.2.5", features = ["derive", "wrap_help"] }
 clap-verbosity-flag = "2.0.1"
 log = "0.4.17"
 env_logger = { version = "0.10.0", default-features = false, features = ["color"] }
 colorchoice-clap = "1.0.0"
 proc-exit = "2.0.1"
-human-panic = "1.1.3"
-anyhow = "1.0.70"
+human-panic = "1.1.4"
+anyhow = "1.0.71"
 syntect = { version = "5.0.0", default-features = false, features = ["parsing", "regex-onig"] }
 terminal_size = "0.2.6"
 textwrap = "0.16.0"
 anstyle = "1.0.0"
-anstream = "0.3.0"
-is-terminal = "0.4.6"
+anstream = "0.3.1"
+is-terminal = "0.4.7"
 content_inspector = "0.2.4"
 git-config-env = "0.1.5"
 shlex = "1.1.0"
 anstyle-syntect = "1.0.0"
 bincode = "1.3.3"
-serde = { version = "1.0.159", features = ["derive"] }
-flate2 = "1.0.25"
+serde = { version = "1.0.160", features = ["derive"] }
+flate2 = "1.0.26"
 once_cell = "1.17.1"
 bugreport = "0.5.0"
-dunce = "1.0.3"
+dunce = "1.0.4"
 encoding_rs = "0.8.32"
 
 [dev-dependencies]
 git-fixture = "0.3.2"
-snapbox = { version = "0.4.10", features = ["path"] }
+snapbox = { version = "0.4.11", features = ["path"] }
 term-transcript = "0.2.0"
 
 [features]
