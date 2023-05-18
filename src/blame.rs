@@ -23,7 +23,7 @@ pub fn blame(
     config.add_repo(&repo);
     let theme = config.get(&THEME);
 
-    let rel_path = to_repo_relative(file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
+    let rel_path = to_repo_relative(&cwd, file_path, &repo).with_code(proc_exit::Code::FAILURE)?;
 
     let rev_obj = repo
         .revparse_single(&args.rev)
@@ -164,14 +164,15 @@ pub fn blame(
 }
 
 fn to_repo_relative(
+    cwd: &std::path::Path,
     path: &std::path::Path,
     repo: &git2::Repository,
 ) -> anyhow::Result<std::path::PathBuf> {
     let workdir = repo.workdir().ok_or_else(|| {
         anyhow::format_err!("No workdir found; Bare repositories are not supported")
     })?;
-    let abs_path = dunce::canonicalize(path)
-        .with_context(|| anyhow::format_err!("Could not read {}", path.display()))?;
+    let abs_path =
+        dunce::canonicalize(path).unwrap_or_else(|_err| path_clean::clean(cwd.join(path)));
     let rel_path = abs_path.strip_prefix(workdir).map_err(|_| {
         anyhow::format_err!(
             "File {} is not in the repository's workdir {}",

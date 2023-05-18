@@ -55,6 +55,7 @@ once_cell = "1.17.1"
 bugreport = "0.5.0"
 dunce = "1.0.4"
 encoding_rs = "0.8.32"
+path-clean = "1.0.1"
 
 [dev-dependencies]
 git-fixture = "0.3.2"
