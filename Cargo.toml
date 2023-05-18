@@ -1,23 +1,38 @@
+[workspace]
+resolver = "2"
+
+[workspace.package]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+rust-version = "1.65.0"  # MSRV
+include = [
+  "build.rs",
+  "src/**/*",
+  "Cargo.toml",
+  "Cargo.lock",
+  "LICENSE*",
+  "README.md",
+  "benches/**/*",
+  "examples/**/*"
+]
+
 [package]
 name = "git-dive"
 description = "Dive into a file's history to find root cause"
 version = "0.1.6"
-license = "MIT OR Apache-2.0"
 repository = "https://github.com/gitext-rs/git-dive"
 documentation = "https://github.com/gitext-rs/git-dive"
 readme = "README.md"
 categories = ["command-line-interface", "development-tools"]
 keywords = ["git", "cli"]
-edition = "2021"
-rust-version = "1.64.0"  # MSRV
-include = [
-  "src/**/*",
-  "assets/**/*",
-  "Cargo.toml",
-  "LICENSE*",
-  "README.md",
-  "examples/**/*"
-]
+license.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+include.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [package.metadata.release]
 pre-release-replacements = [
