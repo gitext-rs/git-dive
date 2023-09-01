@@ -57,7 +57,7 @@ syntect = { version = "5.0.0", default-features = false, features = ["parsing", 
 terminal_size = "0.2.6"
 textwrap = "0.16.0"
 anstyle = "1.0.0"
-anstream = "0.3.1"
+anstream = "0.5.0"
 is-terminal = "0.4.7"
 content_inspector = "0.2.4"
 git-config-env = "0.1.5"
