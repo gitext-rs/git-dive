@@ -80,3 +80,10 @@ term-transcript = "0.2.0"
 [features]
 default = ["vendored-libgit2"]
 vendored-libgit2 = ["git2/vendored-libgit2"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
