@@ -75,7 +75,7 @@ path-clean = "1.0.1"
 [dev-dependencies]
 git-fixture = "0.3.2"
 snapbox = { version = "0.4.12", features = ["path"] }
-term-transcript = "0.2.0"
+term-transcript = "0.3.0"
 
 [features]
 default = ["vendored-libgit2"]
