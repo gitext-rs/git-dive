@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/gitext-rs/git-dive/branch/master/graph/badge.svg)](https://codecov.io/gh/gitext-rs/git-dive)
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)][Documentation]
 ![License](https://img.shields.io/crates/l/git-dive.svg)
-[![Crates Status](https://img.shields.io/crates/v/git-dive.svg)](https://crates.io/crates/git-dive)
+[![Crates Status](https://img.shields.io/crates/v/git-dive.svg)][Crates.io]
 
 Dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE)
 
