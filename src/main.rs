@@ -62,7 +62,14 @@ fn run() -> proc_exit::ExitResult {
         use std::io::Write;
         let _ = writeln!(anstream::stdout(), "{}", assets::get_acknowledgements());
     } else if args.diagnostic {
-        use bugreport::{bugreport, collector::*, format::Markdown};
+        use bugreport::{
+            bugreport,
+            collector::{
+                CommandLine, CompileTimeInformation, EnvironmentVariables, OperatingSystem,
+                SoftwareVersion,
+            },
+            format::Markdown,
+        };
 
         let mut report = bugreport!()
             .info(SoftwareVersion::default())

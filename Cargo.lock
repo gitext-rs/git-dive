@@ -113,6 +113,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "automod"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edf3ee19dbc0a46d740f6f0926bde8c50f02bdbc7b536842da28f6ac56513a8b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -531,6 +542,7 @@ dependencies = [
  "anstyle",
  "anstyle-syntect",
  "anyhow",
+ "automod",
  "bincode",
  "bugreport",
  "clap",
