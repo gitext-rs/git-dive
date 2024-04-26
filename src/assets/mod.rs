@@ -3,17 +3,17 @@ mod lazy_theme_set;
 use anyhow::Error;
 use anyhow::Result;
 
-pub use lazy_theme_set::LazyThemeSet;
+pub(crate) use lazy_theme_set::LazyThemeSet;
 
-pub fn load_themes() -> LazyThemeSet {
+pub(crate) fn load_themes() -> LazyThemeSet {
     get_integrated_themeset()
 }
 
-pub fn load_syntaxes() -> syntect::parsing::SyntaxSet {
+pub(crate) fn load_syntaxes() -> syntect::parsing::SyntaxSet {
     from_binary(get_serialized_integrated_syntaxset(), COMPRESS_SYNTAXES)
 }
 
-pub fn to_anstyle_color(color: syntect::highlighting::Color) -> Option<anstyle::Color> {
+pub(crate) fn to_anstyle_color(color: syntect::highlighting::Color) -> Option<anstyle::Color> {
     if color.a == 0 {
         // Themes can specify one of the user-configurable terminal colors by
         // encoding them as #RRGGBBAA with AA set to 00 (transparent) and RR set
@@ -56,7 +56,7 @@ pub fn to_anstyle_color(color: syntect::highlighting::Color) -> Option<anstyle::
 /// already compressed data.
 const COMPRESS_SYNTAXES: bool = false;
 
-/// We don't want to compress our [LazyThemeSet] since the lazy-loaded themes
+/// We don't want to compress our [`LazyThemeSet`] since the lazy-loaded themes
 /// within it are already compressed, and compressing another time just makes
 /// performance suffer
 const COMPRESS_THEMES: bool = false;
@@ -76,7 +76,7 @@ fn get_integrated_themeset() -> LazyThemeSet {
     from_binary(include_bytes!("../../assets/themes.bin"), COMPRESS_THEMES)
 }
 
-pub fn get_acknowledgements() -> String {
+pub(crate) fn get_acknowledgements() -> String {
     from_binary(
         include_bytes!("../../assets/acknowledgements.bin"),
         COMPRESS_ACKNOWLEDGEMENTS,
@@ -92,7 +92,7 @@ fn asset_from_contents<T: serde::de::DeserializeOwned>(
     contents: &[u8],
     description: &str,
     compressed: bool,
-) -> Result<T, anyhow::Error> {
+) -> Result<T, Error> {
     if compressed {
         bincode::deserialize_from(flate2::read::ZlibDecoder::new(contents))
     } else {

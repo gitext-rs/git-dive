@@ -6,7 +6,7 @@ use crate::git2_config::DefaultField;
 use crate::git2_config::RawField;
 use crate::git_pager::Pager;
 
-pub fn blame(
+pub(crate) fn blame(
     file_path: &std::path::Path,
     config: &mut Config,
     args: &crate::args::Args,
@@ -252,12 +252,12 @@ fn convert_file(buffer: &[u8], path: &std::path::Path) -> anyhow::Result<String>
     Ok(buffer)
 }
 
-pub struct Annotations {
+pub(crate) struct Annotations {
     notes: std::collections::HashMap<git2::Oid, Annotation>,
 }
 
 impl Annotations {
-    pub fn new(repo: &git2::Repository, blame: &git2::Blame<'_>) -> Self {
+    pub(crate) fn new(repo: &git2::Repository, blame: &git2::Blame<'_>) -> Self {
         let mut notes = std::collections::HashMap::new();
         for hunk in blame.iter() {
             let id = hunk.orig_commit_id();
@@ -267,7 +267,11 @@ impl Annotations {
         Annotations { notes }
     }
 
-    pub fn relative_origin(&mut self, repo: &git2::Repository, head: &str) -> anyhow::Result<()> {
+    pub(crate) fn relative_origin(
+        &mut self,
+        repo: &git2::Repository,
+        head: &str,
+    ) -> anyhow::Result<()> {
         let mut queue = self
             .notes
             .keys()
@@ -328,13 +332,13 @@ fn split_revset(mut head: &str) -> (&str, usize) {
     (head, offset)
 }
 
-pub struct Annotation {
+pub(crate) struct Annotation {
     short: String,
     relative: Option<String>,
 }
 
 impl Annotation {
-    pub fn new(repo: &git2::Repository, id: git2::Oid) -> Self {
+    pub(crate) fn new(repo: &git2::Repository, id: git2::Oid) -> Self {
         let obj = repo.find_object(id, None).expect("blame has valid ids");
         let short = obj
             .short_id()
@@ -348,18 +352,18 @@ impl Annotation {
         }
     }
 
-    pub fn origin(&self) -> &str {
+    pub(crate) fn origin(&self) -> &str {
         self.relative.as_deref().unwrap_or(self.short.as_str())
     }
 }
 
-pub struct Highlighter<'a> {
+pub(crate) struct Highlighter<'a> {
     highlighter: Option<syntect::easy::HighlightLines<'a>>,
     theme: &'a syntect::highlighting::Theme,
 }
 
 impl<'a> Highlighter<'a> {
-    pub fn enabled(
+    pub(crate) fn enabled(
         syntax: &'a syntect::parsing::SyntaxReference,
         theme: &'a syntect::highlighting::Theme,
     ) -> Self {
@@ -367,8 +371,7 @@ impl<'a> Highlighter<'a> {
         Self { highlighter, theme }
     }
 
-    pub fn disabled() -> Self {
-        let highlighter = None;
+    pub(crate) fn disabled() -> Self {
         static THEME: syntect::highlighting::Theme = syntect::highlighting::Theme {
             name: None,
             author: None,
@@ -406,6 +409,7 @@ impl<'a> Highlighter<'a> {
             },
             scopes: Vec::new(),
         };
+        let highlighter = None;
         Self {
             highlighter,
             theme: &THEME,
@@ -416,7 +420,7 @@ impl<'a> Highlighter<'a> {
         self.theme
     }
 
-    pub fn highlight_line(
+    pub(crate) fn highlight_line(
         &mut self,
         line: &str,
         syntax_set: &syntect::parsing::SyntaxSet,
@@ -489,5 +493,5 @@ fn gutter_style(theme: &syntect::highlighting::Theme) -> anstyle::Style {
 }
 
 const THEME_DEFAULT: &str = "Monokai Extended";
-pub const THEME: DefaultField<String> =
+pub(crate) const THEME: DefaultField<String> =
     RawField::<String>::new("dive.theme").default_value(|| THEME_DEFAULT.to_owned());

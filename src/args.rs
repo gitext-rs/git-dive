@@ -2,31 +2,31 @@
 #[command(about, author, version)]
 #[command(allow_missing_positional = true)]
 #[command(group = clap::ArgGroup::new("mode").multiple(false).required(true))]
-pub struct Args {
+pub(crate) struct Args {
     #[arg(default_value = "HEAD")]
-    pub rev: String,
+    pub(crate) rev: String,
 
     #[arg(required = true, group = "mode")]
-    pub file: Option<std::path::PathBuf>,
+    pub(crate) file: Option<std::path::PathBuf>,
 
     #[arg(long, value_name = "PATH", group = "mode")]
-    pub dump_config: Option<std::path::PathBuf>,
+    pub(crate) dump_config: Option<std::path::PathBuf>,
 
     /// Display all supported languages
     #[arg(long, group = "mode")]
-    pub list_languages: bool,
+    pub(crate) list_languages: bool,
 
     /// Display all supported highlighting themes
     #[arg(long, group = "mode")]
-    pub list_themes: bool,
+    pub(crate) list_themes: bool,
 
     /// Display acknowledgements
     #[arg(long, hide_short_help = true, group = "mode")]
-    pub acknowledgements: bool,
+    pub(crate) acknowledgements: bool,
 
     /// Display information for bug reports.
     #[arg(long, hide_short_help = true, group = "mode")]
-    pub diagnostic: bool,
+    pub(crate) diagnostic: bool,
 
     /// Run as if git was started in `PATH` instead of the current working directory.
     ///
@@ -40,13 +40,13 @@ pub struct Args {
     ///     git --git-dir=a.git --work-tree=b -C c status
     ///     git --git-dir=c/a.git --work-tree=c/b status
     #[arg(short = 'C', hide = true, value_name = "PATH")]
-    pub current_dir: Option<Vec<std::path::PathBuf>>,
+    pub(crate) current_dir: Option<Vec<std::path::PathBuf>>,
 
     #[command(flatten)]
     pub(crate) color: colorchoice_clap::Color,
 
     #[command(flatten)]
-    pub verbose: clap_verbosity_flag::Verbosity<clap_verbosity_flag::InfoLevel>,
+    pub(crate) verbose: clap_verbosity_flag::Verbosity<clap_verbosity_flag::InfoLevel>,
 }
 
 #[cfg(test)]
@@ -56,6 +56,6 @@ mod test {
     #[test]
     fn verify_app() {
         use clap::CommandFactory;
-        Args::command().debug_assert()
+        Args::command().debug_assert();
     }
 }

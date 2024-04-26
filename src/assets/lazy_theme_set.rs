@@ -1,4 +1,4 @@
-use super::*;
+use super::{asset_from_contents, Error, Result, COMPRESS_LAZY_THEMES};
 
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
@@ -25,7 +25,7 @@ struct LazyTheme {
     serialized: Vec<u8>,
 
     #[serde(skip, default = "OnceCell::new")]
-    deserialized: OnceCell<syntect::highlighting::Theme>,
+    deserialized: OnceCell<Theme>,
 }
 
 impl LazyThemeSet {

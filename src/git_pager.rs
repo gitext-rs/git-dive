@@ -1,12 +1,12 @@
 const DEFAULT_ENV: &[(&str, &str)] = &[("LESS", "FRX"), ("LV", "-c")];
 const REQUIRED_ENV: &[(&str, &str)] = &[("LESSCHARSET", "UTF-8")];
 
-pub struct Pager {
+pub(crate) struct Pager {
     cmd: Option<std::process::Command>,
 }
 
 impl Pager {
-    pub fn stdout(args: &str) -> Self {
+    pub(crate) fn stdout(args: &str) -> Self {
         let cmd = anstream::stdout()
             .is_terminal()
             .then(|| parse(args))
@@ -14,7 +14,7 @@ impl Pager {
         Self { cmd }
     }
 
-    pub fn start(&mut self) -> ActivePager {
+    pub(crate) fn start(&mut self) -> ActivePager {
         let stdout = anstream::stdout().lock();
         if let Some(cmd) = &mut self.cmd {
             // should use pager instead of stderr
@@ -44,14 +44,14 @@ impl Pager {
     }
 }
 
-pub struct ActivePager {
+pub(crate) struct ActivePager {
     primary: anstream::AutoStream<std::io::StdoutLock<'static>>,
     _secondary: Option<anstream::AutoStream<std::io::StderrLock<'static>>>,
     pager: Option<std::process::Child>,
 }
 
 impl ActivePager {
-    pub fn as_writer(&mut self) -> std::io::Result<&mut dyn std::io::Write> {
+    pub(crate) fn as_writer(&mut self) -> std::io::Result<&mut dyn std::io::Write> {
         if let Some(pager) = &mut self.pager {
             pager
                 .stdin

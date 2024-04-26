@@ -1,7 +1,7 @@
 use anyhow::Context as _;
 
 #[derive(Debug)]
-pub struct Config {
+pub(crate) struct Config {
     pager: InMemoryConfig,
     system: Option<GitConfig>,
     xdg: Option<GitConfig>,
@@ -13,7 +13,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn system() -> Self {
+    pub(crate) fn system() -> Self {
         let pager = InMemoryConfig::pager();
         let system = GitConfig::open_system();
         let xdg = GitConfig::open_xdg();
@@ -34,16 +34,19 @@ impl Config {
         }
     }
 
-    pub fn add_repo(&mut self, repo: &git2::Repository) {
+    pub(crate) fn add_repo(&mut self, repo: &git2::Repository) {
         let local = GitConfig::open_local(repo);
         self.local = local;
     }
 
-    pub fn get<F: Field>(&self, field: &F) -> F::Output {
+    pub(crate) fn get<F: Field>(&self, field: &F) -> F::Output {
         field.get_from(self)
     }
 
-    pub fn dump<'f>(&self, fields: impl IntoIterator<Item = &'f dyn ReflectField>) -> String {
+    pub(crate) fn dump<'f>(
+        &self,
+        fields: impl IntoIterator<Item = &'f dyn ReflectField>,
+    ) -> String {
         use std::fmt::Write;
 
         let mut output = String::new();
@@ -66,7 +69,7 @@ impl Config {
         output
     }
 
-    pub fn sources(&self) -> impl Iterator<Item = &dyn ConfigSource> {
+    pub(crate) fn sources(&self) -> impl Iterator<Item = &dyn ConfigSource> {
         [
             Some(&self.git_pager).map(|c| c as &dyn ConfigSource),
             Some(&self.cli).map(|c| c as &dyn ConfigSource),
@@ -82,7 +85,7 @@ impl Config {
     }
 }
 
-pub trait ConfigSource {
+pub(crate) trait ConfigSource {
     fn name(&self) -> &str;
 
     fn get_source(&self, name: &str) -> anyhow::Result<&str>;
@@ -200,28 +203,28 @@ impl ConfigSource for git2::Config {
     }
 }
 
-pub struct GitConfig {
+pub(crate) struct GitConfig {
     name: String,
     config: git2::Config,
 }
 
 impl GitConfig {
-    pub fn open_system() -> Option<Self> {
+    pub(crate) fn open_system() -> Option<Self> {
         let path = git2::Config::find_system().ok()?;
         Self::open_path(&path)
     }
 
-    pub fn open_xdg() -> Option<Self> {
+    pub(crate) fn open_xdg() -> Option<Self> {
         let path = git2::Config::find_xdg().ok()?;
         Self::open_path(&path)
     }
 
-    pub fn open_global() -> Option<Self> {
+    pub(crate) fn open_global() -> Option<Self> {
         let path = git2::Config::find_global().ok()?;
         Self::open_path(&path)
     }
 
-    pub fn open_local(repo: &git2::Repository) -> Option<Self> {
+    pub(crate) fn open_local(repo: &git2::Repository) -> Option<Self> {
         let path = repo.path().join("config");
         let config = git2::Config::open(&path).ok()?;
         let name = "$GIT_DIR/config".to_owned();
@@ -273,17 +276,17 @@ impl std::fmt::Debug for GitConfig {
 }
 
 #[derive(Debug)]
-pub struct InMemoryConfig {
+pub(crate) struct InMemoryConfig {
     name: String,
     values: std::collections::BTreeMap<String, Vec<String>>,
 }
 
 impl InMemoryConfig {
-    pub fn git_env() -> Self {
+    pub(crate) fn git_env() -> Self {
         Self::from_env("git-config-env", git_config_env::ConfigEnv::new().iter())
     }
 
-    pub fn git_cli() -> Self {
+    pub(crate) fn git_cli() -> Self {
         Self::from_env(
             "git-cli",
             git_config_env::ConfigParameters::new()
@@ -292,19 +295,19 @@ impl InMemoryConfig {
         )
     }
 
-    pub fn git_pager() -> Self {
+    pub(crate) fn git_pager() -> Self {
         let name = "GIT_PAGER";
         let value = std::env::var_os(name).and_then(|v| v.into_string().ok());
         Self::from_env(name, value.map(|v| ("core.pager", v)))
     }
 
-    pub fn pager() -> Self {
+    pub(crate) fn pager() -> Self {
         let name = "PAGER";
         let value = std::env::var_os(name).and_then(|v| v.into_string().ok());
         Self::from_env(name, value.map(|v| ("core.pager", v)))
     }
 
-    pub fn from_env(
+    pub(crate) fn from_env(
         name: impl Into<String>,
         env: impl IntoIterator<Item = (impl Into<String>, impl Into<String>)>,
     ) -> Self {
@@ -367,7 +370,7 @@ impl ConfigSource for InMemoryConfig {
     }
 }
 
-pub trait FieldReader<T> {
+pub(crate) trait FieldReader<T> {
     fn get_field(&self, name: &str) -> anyhow::Result<T>;
 }
 
@@ -414,11 +417,11 @@ impl<P: Parseable, C: ConfigSource> FieldReader<P> for C {
     }
 }
 
-pub trait Parseable: Sized {
+pub(crate) trait Parseable: Sized {
     fn parse(s: &str) -> anyhow::Result<Self>;
 }
 
-pub struct ParseWrapper<T>(pub T);
+pub(crate) struct ParseWrapper<T>(pub(crate) T);
 
 impl<T: std::fmt::Display> std::fmt::Display for ParseWrapper<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -450,7 +453,7 @@ where
     }
 }
 
-pub trait Field {
+pub(crate) trait Field {
     type Output;
 
     fn name(&self) -> &'static str;
@@ -458,20 +461,20 @@ pub trait Field {
     fn get_source<'c>(&self, config: &'c Config) -> Option<&'c str>;
 }
 
-pub struct RawField<R> {
+pub(crate) struct RawField<R> {
     name: &'static str,
     _type: std::marker::PhantomData<R>,
 }
 
 impl<R> RawField<R> {
-    pub const fn new(name: &'static str) -> Self {
+    pub(crate) const fn new(name: &'static str) -> Self {
         Self {
             name,
             _type: std::marker::PhantomData,
         }
     }
 
-    pub const fn default_value(self, default: DefaultFn<R>) -> DefaultField<R> {
+    pub(crate) const fn default_value(self, default: DefaultFn<R>) -> DefaultField<R> {
         DefaultField {
             field: self,
             default,
@@ -483,7 +486,7 @@ impl<R> RawField<R>
 where
     R: Default,
 {
-    pub const fn default(self) -> DefaultField<R> {
+    pub(crate) const fn default(self) -> DefaultField<R> {
         DefaultField {
             field: self,
             default: R::default,
@@ -512,7 +515,7 @@ where
 
 type DefaultFn<R> = fn() -> R;
 
-pub struct DefaultField<R> {
+pub(crate) struct DefaultField<R> {
     field: RawField<R>,
     default: DefaultFn<R>,
 }
@@ -538,7 +541,7 @@ where
     }
 }
 
-pub trait ReflectField {
+pub(crate) trait ReflectField {
     fn name(&self) -> &'static str;
 
     fn dump(&self, config: &Config) -> String;
@@ -563,14 +566,14 @@ where
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum ColorWhen {
+pub(crate) enum ColorWhen {
     Always,
     Auto,
     Never,
 }
 
 impl ColorWhen {
-    pub fn as_str(&self) -> &'static str {
+    pub(crate) fn as_str(&self) -> &'static str {
         match self {
             Self::Always => "always",
             Self::Auto => "auto",
@@ -610,7 +613,8 @@ impl Parseable for ColorWhen {
     }
 }
 
-pub const COLOR_UI: DefaultField<ColorWhen> = RawField::<ColorWhen>::new("color.ui").default();
+pub(crate) const COLOR_UI: DefaultField<ColorWhen> =
+    RawField::<ColorWhen>::new("color.ui").default();
 
-pub const PAGER: DefaultField<String> =
+pub(crate) const PAGER: DefaultField<String> =
     RawField::<String>::new("core.pager").default_value(|| "less".to_owned());
