@@ -24,10 +24,10 @@ fn main() {
 
 fn run() -> proc_exit::ExitResult {
     let mut config = Config::system();
-    match config.get(&crate::git2_config::COLOR_UI) {
-        crate::git2_config::ColorWhen::Always => anstream::ColorChoice::Always,
-        crate::git2_config::ColorWhen::Auto => anstream::ColorChoice::Auto,
-        crate::git2_config::ColorWhen::Never => anstream::ColorChoice::Never,
+    match config.get(&git2_config::COLOR_UI) {
+        git2_config::ColorWhen::Always => anstream::ColorChoice::Always,
+        git2_config::ColorWhen::Auto => anstream::ColorChoice::Auto,
+        git2_config::ColorWhen::Never => anstream::ColorChoice::Never,
     }
     .write_global();
 
@@ -109,7 +109,7 @@ fn list_languages(config: &mut Config) -> proc_exit::ExitResult {
         .or_else(|| std::env::var_os("COLUMNS").and_then(|s| s.to_str()?.parse::<u16>().ok()))
         .unwrap_or(80) as usize;
 
-    let pager = config.get(&crate::git2_config::PAGER);
+    let pager = config.get(&git2_config::PAGER);
     let mut pager = Pager::stdout(&pager);
     let mut pager = pager.start();
     let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
@@ -159,7 +159,7 @@ fn list_languages(config: &mut Config) -> proc_exit::ExitResult {
 fn list_themes(config: &mut Config) -> proc_exit::ExitResult {
     let colored_stdout =
         anstream::AutoStream::choice(&std::io::stdout()) != anstream::ColorChoice::Never;
-    let pager = config.get(&crate::git2_config::PAGER);
+    let pager = config.get(&git2_config::PAGER);
     let mut pager = Pager::stdout(&pager);
     let mut pager = pager.start();
     let pager = pager.as_writer().with_code(proc_exit::Code::FAILURE)?;
