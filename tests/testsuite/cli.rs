@@ -1,6 +1,8 @@
+use snapbox::prelude::*;
+
 #[test]
 fn basic() {
-    let root = snapbox::path::PathFixture::mutable_temp().unwrap();
+    let root = snapbox::dir::DirRoot::mutable_temp().unwrap();
     let root_path = root.path().unwrap();
     let plan = git_fixture::TodoList {
         commands: vec![
@@ -23,12 +25,13 @@ fn basic() {
         .current_dir(root_path)
         .assert()
         .success()
-        .stdout_eq(
+        .stdout_eq_(
             "\
 HEAD 1 │ test('arg1');
-",
+"
+            .raw(),
         )
-        .stderr_matches(
+        .stderr_eq_(
             "\
 ",
         );
@@ -38,7 +41,7 @@ HEAD 1 │ test('arg1');
 
 #[test]
 fn js_highlight_panics() {
-    let root = snapbox::path::PathFixture::mutable_temp().unwrap();
+    let root = snapbox::dir::DirRoot::mutable_temp().unwrap();
     let root_path = root.path().unwrap();
     let plan = git_fixture::TodoList {
         commands: vec![
@@ -62,7 +65,7 @@ fn js_highlight_panics() {
         .env("CLICOLOR_FORCE", "1")
         .assert()
         .success()
-        .stderr_matches(
+        .stderr_eq_(
             "\
 ",
         );
