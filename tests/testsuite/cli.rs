@@ -25,13 +25,13 @@ fn basic() {
         .current_dir(root_path)
         .assert()
         .success()
-        .stdout_eq_(
+        .stdout_eq(
             "\
 HEAD 1 │ test('arg1');
 "
             .raw(),
         )
-        .stderr_eq_(
+        .stderr_eq(
             "\
 ",
         );
@@ -65,7 +65,7 @@ fn js_highlight_panics() {
         .env("CLICOLOR_FORCE", "1")
         .assert()
         .success()
-        .stderr_eq_(
+        .stderr_eq(
             "\
 ",
         );
