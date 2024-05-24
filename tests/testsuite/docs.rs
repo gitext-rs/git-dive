@@ -3,7 +3,7 @@
 fn screenshot() {
     use term_transcript::{test::TestConfig, ShellOptions};
 
-    let scratchpad = snapbox::path::PathFixture::mutable_temp().unwrap();
+    let scratchpad = snapbox::dir::DirRoot::mutable_temp().unwrap();
     let scratchpad_path = scratchpad.path().unwrap();
     let status = std::process::Command::new("git")
         .arg("clone")
