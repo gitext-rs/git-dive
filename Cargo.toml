@@ -144,7 +144,7 @@ path-clean = "1.0.1"
 
 [dev-dependencies]
 git-fixture = "0.3.4"
-snapbox = { version = "0.5.9", features = ["path"] }
+snapbox = { version = "0.5.14", features = ["path"] }
 term-transcript = "0.3.0"
 automod = "1.0.14"
 
