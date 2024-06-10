@@ -21,7 +21,7 @@ fn screenshot() {
         .unwrap();
     assert!(status.success());
 
-    let cmd_path = snapbox::cmd::cargo_bin("git-dive");
+    let cmd_path = snapbox::cmd::cargo_bin!("git-dive");
 
     // HACK: term_transcript doesn't allow non-UTF8 paths
     let cmd = "git-dive Cargo.toml";
