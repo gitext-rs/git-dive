@@ -72,33 +72,3 @@ impl TryFrom<LazyThemeSet> for ThemeSet {
         Ok(theme_set)
     }
 }
-
-#[cfg(feature = "build-assets")]
-impl TryFrom<ThemeSet> for LazyThemeSet {
-    type Error = Error;
-
-    /// To collect themes, a [`ThemeSet`] is needed. Once all desired themes
-    /// have been added, we need a way to convert that into [`LazyThemeSet`] so
-    /// that themes can be lazy-loaded later. This function does that
-    /// conversion.
-    fn try_from(theme_set: ThemeSet) -> Result<Self> {
-        let mut lazy_theme_set = LazyThemeSet::default();
-
-        for (name, theme) in theme_set.themes {
-            // All we have to do is to serialize the theme
-            let lazy_theme = LazyTheme {
-                serialized: crate::assets::build_assets::asset_to_contents(
-                    &theme,
-                    &format!("theme {}", name),
-                    COMPRESS_LAZY_THEMES,
-                )?,
-                deserialized: OnceCell::new(),
-            };
-
-            // Ok done, now we can add it
-            lazy_theme_set.themes.insert(name, lazy_theme);
-        }
-
-        Ok(lazy_theme_set)
-    }
-}
