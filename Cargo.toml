@@ -156,6 +156,7 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 codegen-units = 1
+lto = true
 
 [lints]
 workspace = true
