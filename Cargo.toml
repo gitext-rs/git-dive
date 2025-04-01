@@ -5,7 +5,7 @@ resolver = "2"
 repository = "https://github.com/gitext-rs/git-dive"
 license = "MIT OR Apache-2.0"
 edition = "2021"
-rust-version = "1.76"  # MSRV
+rust-version = "1.85"  # MSRV
 include = [
   "build.rs",
   "src/**/*",
@@ -133,7 +133,7 @@ content_inspector = "0.2.4"
 git-config-env = "0.2.1"
 shlex = "1.3.0"
 anstyle-syntect = "1.0.0"
-bincode = "1.3.3"
+bincode = { version = "2.0", default-features = false, features = ["std", "serde"] }
 serde = { version = "1.0.199", features = ["derive"] }
 flate2 = "1.0.30"
 once_cell = "1.19.0"
