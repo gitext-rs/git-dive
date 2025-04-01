@@ -93,10 +93,12 @@ fn asset_from_contents<T: serde::de::DeserializeOwned>(
     description: &str,
     compressed: bool,
 ) -> Result<T, Error> {
+    let config = bincode::config::legacy();
     if compressed {
-        bincode::deserialize_from(flate2::read::ZlibDecoder::new(contents))
+        let mut reader = flate2::read::ZlibDecoder::new(contents);
+        bincode::serde::decode_from_std_read(&mut reader, config)
     } else {
-        bincode::deserialize_from(contents)
+        bincode::serde::decode_from_slice(contents, config).map(|(a, _)| a)
     }
     .map_err(|_| anyhow::format_err!("Could not parse {}", description))
 }
