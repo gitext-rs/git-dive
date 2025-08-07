@@ -421,38 +421,6 @@ pub(crate) trait Parseable: Sized {
     fn parse(s: &str) -> anyhow::Result<Self>;
 }
 
-pub(crate) struct ParseWrapper<T>(pub(crate) T);
-
-impl<T: std::fmt::Display> std::fmt::Display for ParseWrapper<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl<T> std::str::FromStr for ParseWrapper<T>
-where
-    T: std::str::FromStr,
-    T::Err: Into<anyhow::Error>,
-{
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        T::from_str(s).map(ParseWrapper).map_err(|e| e.into())
-    }
-}
-
-impl<T> Parseable for ParseWrapper<T>
-where
-    T: Parseable,
-    T: std::str::FromStr,
-    T: std::fmt::Display,
-    T::Err: Into<anyhow::Error>,
-{
-    fn parse(s: &str) -> anyhow::Result<Self> {
-        <Self as std::str::FromStr>::from_str(s)
-    }
-}
-
 pub(crate) trait Field {
     type Output;
 
