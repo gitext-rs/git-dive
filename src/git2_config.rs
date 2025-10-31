@@ -533,9 +533,10 @@ where
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 pub(crate) enum ColorWhen {
     Always,
+    #[default]
     Auto,
     Never,
 }
@@ -547,12 +548,6 @@ impl ColorWhen {
             Self::Auto => "auto",
             Self::Never => "never",
         }
-    }
-}
-
-impl Default for ColorWhen {
-    fn default() -> Self {
-        Self::Auto
     }
 }
 
