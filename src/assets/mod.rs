@@ -100,5 +100,5 @@ fn asset_from_contents<T: serde::de::DeserializeOwned>(
     } else {
         bincode::serde::decode_from_slice(contents, config).map(|(a, _)| a)
     }
-    .map_err(|_| anyhow::format_err!("Could not parse {}", description))
+    .map_err(|_| anyhow::format_err!("Could not parse {description}"))
 }
