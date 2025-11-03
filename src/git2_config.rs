@@ -377,42 +377,42 @@ pub(crate) trait FieldReader<T> {
 impl<C: ConfigSource> FieldReader<bool> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<bool> {
         self.get_bool(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
     }
 }
 
 impl<C: ConfigSource> FieldReader<i32> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<i32> {
         self.get_i32(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
     }
 }
 
 impl<C: ConfigSource> FieldReader<i64> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<i64> {
         self.get_i64(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
     }
 }
 
 impl<C: ConfigSource> FieldReader<String> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<String> {
         self.get_string(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
     }
 }
 
 impl<C: ConfigSource> FieldReader<std::path::PathBuf> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<std::path::PathBuf> {
         self.get_path(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
     }
 }
 
 impl<P: Parseable, C: ConfigSource> FieldReader<P> for C {
     fn get_field(&self, name: &str) -> anyhow::Result<P> {
         self.get_string(name)
-            .with_context(|| anyhow::format_err!("failed to read `{}`", name))
+            .with_context(|| anyhow::format_err!("failed to read `{name}`"))
             .and_then(|s| P::parse(&s))
     }
 }
@@ -565,7 +565,7 @@ impl std::str::FromStr for ColorWhen {
             "always" | "true" => Ok(Self::Always),
             "auto" => Ok(Self::Auto),
             "never" | "false" => Ok(Self::Never),
-            _ => Err(anyhow::format_err!("unsupported color valued: `{}`", s)),
+            _ => Err(anyhow::format_err!("unsupported color valued: `{s}`")),
         }
     }
 }
