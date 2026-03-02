@@ -1,10 +1,10 @@
 use anyhow::Context as _;
 use proc_exit::WithCodeResultExt;
 
+use crate::git_pager::Pager;
 use crate::git2_config::Config;
 use crate::git2_config::DefaultField;
 use crate::git2_config::RawField;
-use crate::git_pager::Pager;
 
 pub(crate) fn blame(
     file_path: &std::path::Path,
