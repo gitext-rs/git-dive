@@ -1,4 +1,4 @@
-use super::{asset_from_contents, Error, Result, COMPRESS_LAZY_THEMES};
+use super::{COMPRESS_LAZY_THEMES, Error, Result, asset_from_contents};
 
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
