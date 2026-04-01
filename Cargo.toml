@@ -151,7 +151,7 @@ encoding_rs = "0.8.34"
 path-clean = "1.0.1"
 
 [dev-dependencies]
-git-fixture = "0.3.4"
+git-fixture = "1.0.0"
 snapbox = { version = "1.0.0", features = ["dir"] }
 term-transcript = "0.4.0"
 automod = "1.0.14"
