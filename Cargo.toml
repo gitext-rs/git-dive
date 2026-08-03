@@ -5,7 +5,7 @@ resolver = "3"
 repository = "https://github.com/gitext-rs/git-dive"
 license = "MIT OR Apache-2.0"
 edition = "2024"
-rust-version = "1.85"  # MSRV
+rust-version = "1.95"  # MSRV
 include = [
   "build.rs",
   "src/**/*",
