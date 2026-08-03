@@ -5,7 +5,7 @@ resolver = "3"
 repository = "https://github.com/gitext-rs/git-dive"
 license = "MIT OR Apache-2.0"
 edition = "2024"
-rust-version = "1.85"  # MSRV
+rust-version = "1.95"  # MSRV
 include = [
   "build.rs",
   "src/**/*",
@@ -153,7 +153,7 @@ path-clean = "1.0.1"
 [dev-dependencies]
 git-fixture = "1.0.0"
 snapbox = { version = "1.0.0", features = ["dir"] }
-term-transcript = "0.4.0"
+term-transcript = "0.5.0"
 automod = "1.0.14"
 
 [features]
