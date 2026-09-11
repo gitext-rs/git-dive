@@ -63,7 +63,7 @@ impl TryFrom<LazyThemeSet> for ThemeSet {
     /// themes can be added. This function does that pretty straight-forward
     /// conversion.
     fn try_from(lazy_theme_set: LazyThemeSet) -> Result<Self> {
-        let mut theme_set = ThemeSet::default();
+        let mut theme_set = Self::default();
 
         for (name, lazy_theme) in lazy_theme_set.themes {
             theme_set.themes.insert(name, lazy_theme.deserialize()?);
