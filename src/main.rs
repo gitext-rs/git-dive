@@ -1,7 +1,3 @@
-#![allow(clippy::collapsible_else_if)]
-#![allow(clippy::let_and_return)]
-#![allow(clippy::if_same_then_else)]
-
 use clap::Parser;
 use proc_exit::prelude::*;
 
