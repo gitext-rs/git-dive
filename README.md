@@ -1,3 +1,5 @@
+# ARCHIVED
+
 # git-dive
 
 > **Dive into a file's history to find root cause**
